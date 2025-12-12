@@ -318,7 +318,8 @@ export default class Application {
 	setChat() {
 		this.chat = new Chat({
 			time: this.time,
-			world: this.world
+			world: this.world,
+			network: this.network
 		})
 		this.world.chat = this.chat
 	}
@@ -501,6 +502,11 @@ export default class Application {
 
 		// Pass player data to world
 		this.world.setPlayerData(this.playerData)
+
+		// Update chat username
+		if (this.chat) {
+			this.chat.setUsername(this.playerData.username)
+		}
 
 		// Trigger the starting screen interaction (simulate click to start)
 		if (this.world.startingScreen && this.world.startingScreen.area) {

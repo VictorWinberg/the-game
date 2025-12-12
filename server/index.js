@@ -154,6 +154,14 @@ io.on('connection', (socket) => {
 		})
 	})
 
+	socket.on('chat-message', (data) => {
+		if (!currentRoom) return
+		socket.to(currentRoom).emit('chat-message', {
+			id: socket.id,
+			...data
+		})
+	})
+
 	socket.on('disconnect', () => {
 		console.log(`Player disconnected: ${socket.id}`)
 

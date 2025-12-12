@@ -65,6 +65,11 @@ export default class NetworkClient extends EventEmitter {
 			this.socket.on('player-action', (action) => {
 				this.trigger('player-action', [action])
 			})
+
+			// Handle chat messages
+			this.socket.on('chat-message', (data) => {
+				this.trigger('chat-message', [data])
+			})
 		})
 	}
 
@@ -113,6 +118,11 @@ export default class NetworkClient extends EventEmitter {
 	sendAction(action) {
 		if (!this.connected || !this.roomCode) return
 		this.socket.emit('player-action', action)
+	}
+
+	sendChat(message) {
+		if (!this.connected || !this.roomCode) return
+		this.socket.emit('chat-message', message)
 	}
 
 	getRoomInfo() {

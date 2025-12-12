@@ -23,6 +23,8 @@ export default class RemoteCar {
 			this.nowPlaying = Songs[Math.floor(Math.random() * Songs.length)]
 		}
 
+		this.lapCount = 0
+
 		// Container for all car meshes
 		this.container = new THREE.Object3D()
 		this.position = new THREE.Vector3()
@@ -200,6 +202,12 @@ export default class RemoteCar {
 			this.username = state.username
 			this.setUsernameLabel()
 		}
+
+		// Update lap count
+		if (state.lapCount !== undefined && state.lapCount !== this.lapCount) {
+			this.lapCount = state.lapCount
+			this.setUsernameLabel()
+		}
 	}
 
 	applyColor(colorName) {
@@ -221,8 +229,9 @@ export default class RemoteCar {
 
 		const canvas = document.createElement('canvas')
 		canvas.width = 512
-		// Increase height if now playing
-		canvas.height = this.nowPlaying ? 200 : 128
+		// Increase height if now playing or showing lap count
+		const hasExtraInfo = this.nowPlaying || this.lapCount > 0
+		canvas.height = hasExtraInfo ? 200 : 128
 
 		const context = canvas.getContext('2d')
 		if (!context) return
@@ -256,8 +265,26 @@ export default class RemoteCar {
 			textWidth = Math.max(textWidth, songTextWidth)
 		}
 
+		// Calculate lap text width if applicable
+		let lapText = ''
+		let lapTextWidth = 0
+		const lapFontSize = 32
+		const lapFont = `700 ${lapFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			lapText = `🏁 Lap ${this.lapCount}`
+			const lapMetrics = context.measureText(lapText)
+			lapTextWidth = Math.ceil(lapMetrics.width)
+			
+			// Use the wider of all texts
+			textWidth = Math.max(textWidth, lapTextWidth)
+		}
+
 		const boxWidth = Math.min(canvas.width - paddingX * 2, textWidth + paddingX * 2)
-		const boxHeight = this.nowPlaying ? fontSize + songFontSize + paddingY * 3 : fontSize + paddingY * 2
+		let boxHeight = fontSize + paddingY * 2
+		if (this.nowPlaying) boxHeight += songFontSize + paddingY
+		if (this.lapCount > 0) boxHeight += lapFontSize + paddingY
 		const boxX = (canvas.width - boxWidth) * 0.5
 		const boxY = (canvas.height - boxHeight) * 0.5
 		const radius = 26
@@ -299,7 +326,10 @@ export default class RemoteCar {
 		// Username Text
 		context.font = font
 		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
-		const nameY = this.nowPlaying ? boxY + paddingY + fontSize * 0.5 : canvas.height * 0.5 + 2
+		let nameY = boxY + paddingY + fontSize * 0.5
+		if (!this.nowPlaying && !this.lapCount) {
+			nameY = canvas.height * 0.5 + 2
+		}
 		context.fillText(text, canvas.width * 0.5, nameY)
 
 		// Song Text
@@ -308,6 +338,17 @@ export default class RemoteCar {
 			context.fillStyle = 'rgba(30, 215, 96, 0.9)' // Spotify green-ish
 			const songY = nameY + fontSize * 0.5 + paddingY * 0.5 + songFontSize * 0.5
 			context.fillText(songText, canvas.width * 0.5, songY)
+		}
+
+		// Lap Text
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			context.fillStyle = 'rgba(255, 200, 0, 0.95)' // Gold/yellow color
+			let lapY = nameY + fontSize * 0.5 + paddingY * 0.5 + lapFontSize * 0.5
+			if (this.nowPlaying) {
+				lapY += songFontSize * 0.5 + paddingY * 0.5
+			}
+			context.fillText(lapText, canvas.width * 0.5, lapY)
 		}
 
 		const texture = new THREE.CanvasTexture(canvas)

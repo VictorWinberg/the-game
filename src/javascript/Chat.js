@@ -12,7 +12,15 @@ export default class Chat {
 		this.nextMessageDelay = null
 		this.userUsername = 'You'
 
+		this.network = _options.network
+
 		this.setInput()
+
+		if (this.network) {
+			this.network.on('chat-message', (data) => {
+				this.addMessage(data.username, data.message)
+			})
+		}
 
 		this.usernames = [
 			'xX_SkaterBoi_Xx',
@@ -98,6 +106,14 @@ export default class Chat {
 			const text = this.$input.value.trim()
 			if (text) {
 				this.addUserMessage(text)
+				
+				if (this.network && this.network.connected && this.network.roomCode) {
+					this.network.sendChat({
+						username: this.userUsername,
+						message: text
+					})
+				}
+
 				this.$input.value = ''
 			}
 		}
@@ -170,6 +186,10 @@ export default class Chat {
 
 	addUserMessage(_text) {
 		this.addMessage(this.userUsername, _text)
+	}
+
+	setUsername(_username) {
+		this.userUsername = _username
 	}
 
 	scrollToBottom() {

@@ -584,7 +584,8 @@ export default class World {
 					},
 					steering: this.physics.car.steering,
 					username: this.playerData.username,
-					color: this.playerData.color
+					color: this.playerData.color,
+					lapCount: this.car.lapCount
 				})
 			}
 		})
