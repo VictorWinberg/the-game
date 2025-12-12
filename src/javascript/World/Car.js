@@ -38,6 +38,7 @@ export default class Car {
 		this.setShootingBall()
 		this.setKlaxon()
 		this.setProjectileShoot()
+		this.setExplosion()
 	}
 
 	setModels() {
@@ -399,11 +400,69 @@ export default class Car {
 				projectile.collision.body.applyImpulse(impulse, projectile.collision.body.position)
 
 				// Add some spin for visual effect
-				projectile.collision.body.angularVelocity.set(
-					(Math.random() - 0.5) * 20,
-					(Math.random() - 0.5) * 20,
-					(Math.random() - 0.5) * 20
-				)
+				projectile.collision.body.angularVelocity.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20)
+			}
+		})
+	}
+
+	setExplosion() {
+		this.explosion = {}
+		this.explosion.lastTime = 0
+		this.explosion.cooldown = 5000 // seconds between explosions
+		this.explosion.radius = 8 // radius of effect
+		this.explosion.strength = 20 // impulse strength
+
+		window.addEventListener('keydown', (_event) => {
+			if (_event.code === 'KeyE') {
+				// Check cooldown
+				if (this.time.elapsed - this.explosion.lastTime < this.explosion.cooldown) {
+					return
+				}
+				this.explosion.lastTime = this.time.elapsed
+
+				// Get car position
+				const carPos = new CANNON.Vec3(this.position.x, this.position.y, this.position.z)
+
+				// Iterate through all physics bodies in the world
+				for (const body of this.physics.world.bodies) {
+					// Skip the car chassis and static objects (mass = 0)
+					if (body === this.physics.car.chassis.body || body.mass === 0) {
+						continue
+					}
+
+					// Calculate distance to the body
+					const bodyPos = body.position
+					const distance = carPos.distanceTo(bodyPos)
+
+					// Check if within explosion radius
+					if (distance < this.explosion.radius && distance > 0) {
+						// Wake up the body if sleeping
+						body.wakeUp()
+
+						// Calculate direction away from car
+						let direction = bodyPos.vsub(carPos)
+						direction.normalize()
+
+						// Calculate impulse strength based on distance (closer = stronger)
+						const distanceFactor = 1 - distance / this.explosion.radius
+						const impulseStrength = this.explosion.strength * distanceFactor * body.mass
+
+						// Apply impulse with some upward force for a more dramatic effect
+						const impulse = new CANNON.Vec3(
+							direction.x * impulseStrength,
+							direction.y * impulseStrength,
+							(direction.z + 0.5) * impulseStrength // Add upward boost
+						)
+
+						body.applyImpulse(impulse, body.position)
+
+						// Add some random angular velocity for tumbling effect
+						body.angularVelocity.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10)
+					}
+				}
+
+				// Play a sound effect (using existing sound)
+				this.sounds.play('brick')
 			}
 		})
 	}

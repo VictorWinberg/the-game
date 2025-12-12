@@ -365,8 +365,8 @@ export default class IntroSection {
 	}
 
 	explodePyramid() {
-		const explosionStrength = 150
-		const upwardBoost = 80
+		const explosionStrength = 2
+		const upwardBoost = 6
 
 		for (const block of this.pyramidBlocks) {
 			// Wake up the body
