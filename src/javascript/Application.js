@@ -7,6 +7,7 @@ import World from './World/index.js'
 import Resources from './Resources.js'
 import Camera from './Camera.js'
 import ThreejsJourney from './ThreejsJourney.js'
+import Chat from './Chat.js'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
@@ -35,6 +36,7 @@ export default class Application {
 		this.setWorld()
 		this.setTitle()
 		this.setThreejsJourney()
+		this.setChat()
 	}
 
 	/**
@@ -256,6 +258,16 @@ export default class Application {
 	setThreejsJourney() {
 		this.threejsJourney = new ThreejsJourney({
 			config: this.config,
+			time: this.time,
+			world: this.world
+		})
+	}
+
+	/**
+	 * Set chat
+	 */
+	setChat() {
+		this.chat = new Chat({
 			time: this.time,
 			world: this.world
 		})
