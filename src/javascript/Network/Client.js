@@ -16,7 +16,12 @@ export default class NetworkClient extends EventEmitter {
 		this.lastSendTime = 0
 	}
 
-	connect(serverUrl = 'http://localhost:3000') {
+	connect(serverUrl) {
+		// Auto-detect server URL: use same host as the page, but on port 3000
+		if (!serverUrl) {
+			const host = window.location.hostname || 'localhost'
+			serverUrl = `http://${host}:3000`
+		}
 		return new Promise((resolve, reject) => {
 			this.socket = io(serverUrl, {
 				transports: ['websocket']

@@ -1,7 +1,34 @@
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import { readFileSync, existsSync } from 'fs'
+import { join, extname } from 'path'
+import { fileURLToPath } from 'url'
+import { networkInterfaces } from 'os'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const DIST_DIR = join(__dirname, '..', 'dist')
 
 const PORT = process.env.PORT || 3000
+
+const MIME_TYPES = {
+	'.html': 'text/html',
+	'.js': 'application/javascript',
+	'.css': 'text/css',
+	'.json': 'application/json',
+	'.png': 'image/png',
+	'.jpg': 'image/jpeg',
+	'.gif': 'image/gif',
+	'.svg': 'image/svg+xml',
+	'.ico': 'image/x-icon',
+	'.woff': 'font/woff',
+	'.woff2': 'font/woff2',
+	'.ttf': 'font/ttf',
+	'.glb': 'model/gltf-binary',
+	'.gltf': 'model/gltf+json',
+	'.mp3': 'audio/mpeg',
+	'.wav': 'audio/wav',
+	'.ogg': 'audio/ogg'
+}
 const MAX_PLAYERS_PER_ROOM = 4
 
 const rooms = new Map()
@@ -18,7 +45,43 @@ function generateRoomCode() {
 	return code
 }
 
-const httpServer = createServer()
+const httpServer = createServer((req, res) => {
+	let filePath = req.url === '/' ? '/index.html' : req.url
+
+	// Remove query strings
+	filePath = filePath.split('?')[0]
+
+	const fullPath = join(DIST_DIR, filePath)
+
+	if (existsSync(fullPath)) {
+		try {
+			const content = readFileSync(fullPath)
+			const ext = extname(filePath)
+			const contentType = MIME_TYPES[ext] || 'application/octet-stream'
+			res.writeHead(200, { 'Content-Type': contentType })
+			res.end(content)
+		} catch (err) {
+			res.writeHead(500)
+			res.end('Server Error')
+		}
+	} else {
+		// For SPA routing, serve index.html for non-asset requests
+		if (!extname(filePath)) {
+			try {
+				const content = readFileSync(join(DIST_DIR, 'index.html'))
+				res.writeHead(200, { 'Content-Type': 'text/html' })
+				res.end(content)
+			} catch (err) {
+				res.writeHead(404)
+				res.end('Not Found')
+			}
+		} else {
+			res.writeHead(404)
+			res.end('Not Found')
+		}
+	}
+})
+
 const io = new Server(httpServer, {
 	cors: {
 		origin: '*',
@@ -114,15 +177,37 @@ io.on('connection', (socket) => {
 	})
 })
 
-httpServer.listen(PORT, () => {
+function getLocalIP() {
+	const nets = networkInterfaces()
+	for (const name of Object.keys(nets)) {
+		for (const net of nets[name]) {
+			if (net.family === 'IPv4' && !net.internal) {
+				return net.address
+			}
+		}
+	}
+	return 'localhost'
+}
+
+httpServer.listen(PORT, '0.0.0.0', () => {
+	const localIP = getLocalIP()
 	console.log(`
-╔════════════════════════════════════════╗
-║     Multiplayer Server Running         ║
-║                                        ║
-║   Local:   http://localhost:${PORT}       ║
-║                                        ║
-║   Share your local IP with friends     ║
-║   to let them connect!                 ║
-╚════════════════════════════════════════╝
+╔════════════════════════════════════════════════════╗
+║         🚗 Multiplayer Game Server 🚗              ║
+╠════════════════════════════════════════════════════╣
+║                                                    ║
+║   Game is running!                                 ║
+║                                                    ║
+║   YOU play at:                                     ║
+║   → http://localhost:${PORT}                          ║
+║                                                    ║
+║   FRIENDS join at:                                 ║
+║   → http://${localIP}:${PORT}                       ║
+║                                                    ║
+║   1. Open the game in your browser                 ║
+║   2. Click "Host Game" to get a room code          ║
+║   3. Share the code with your friends!             ║
+║                                                    ║
+╚════════════════════════════════════════════════════╝
 `)
 })
