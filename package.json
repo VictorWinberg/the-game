@@ -7,6 +7,7 @@
     "build": "vite build"
   },
   "devDependencies": {
+    "prettier": "^3.7.4",
     "vite": "^5.2.11",
     "vite-plugin-glsl": "^1.3.0"
   },

@@ -1,219 +1,185 @@
 import gsap from 'gsap'
 
-export default class ThreejsJourney
-{
-    constructor(_options)
-    {
-        // Options
-        this.config = _options.config
-        this.time = _options.time
-        this.world = _options.world
+export default class ThreejsJourney {
+	constructor(_options) {
+		// Options
+		this.config = _options.config
+		this.time = _options.time
+		this.world = _options.world
 
-        // Setup
-        this.$container = document.querySelector('.js-threejs-journey')
-        this.$messages = [...this.$container.querySelectorAll('.js-message')]
-        this.$yes = this.$container.querySelector('.js-yes')
-        this.$no = this.$container.querySelector('.js-no')
-        this.step = 0
-        this.maxStep = this.$messages.length - 1
-        this.seenCount = window.localStorage.getItem('threejsJourneySeenCount') || 0
-        this.seenCount = parseInt(this.seenCount)
-        this.shown = false
-        this.traveledDistance = 0
-        this.minTraveledDistance = (this.config.debug ? 5 : 75) * (this.seenCount + 1)
-        this.prevent = !!window.localStorage.getItem('threejsJourneyPrevent')
+		// Setup
+		this.$container = document.querySelector('.js-threejs-journey')
+		this.$messages = [...this.$container.querySelectorAll('.js-message')]
+		this.$yes = this.$container.querySelector('.js-yes')
+		this.$no = this.$container.querySelector('.js-no')
+		this.step = 0
+		this.maxStep = this.$messages.length - 1
+		this.seenCount = window.localStorage.getItem('threejsJourneySeenCount') || 0
+		this.seenCount = parseInt(this.seenCount)
+		this.shown = false
+		this.traveledDistance = 0
+		this.minTraveledDistance = (this.config.debug ? 5 : 75) * (this.seenCount + 1)
+		this.prevent = !!window.localStorage.getItem('threejsJourneyPrevent')
 
-        if(this.config.debug)
-            this.start()
-        
-        if(this.prevent)
-            return
+		if (this.config.debug) this.start()
 
-        this.setYesNo()
-        this.setLog()
+		if (this.prevent) return
 
-        this.time.on('tick', () =>
-        {
-            if(this.world.physics)
-            {
-                this.traveledDistance += this.world.physics.car.forwardSpeed
+		this.setYesNo()
+		this.setLog()
 
-                if(!this.config.touch && !this.shown && this.traveledDistance > this.minTraveledDistance)
-                {
-                    this.start()
-                }
-            }
-        })
-    }
+		this.time.on('tick', () => {
+			if (this.world.physics) {
+				this.traveledDistance += this.world.physics.car.forwardSpeed
 
-    setYesNo()
-    {
-        // Clicks
-        this.$yes.addEventListener('click', () =>
-        {
-            gsap.delayedCall(2, () =>
-            {
-                this.hide()
-            })
-            window.localStorage.setItem('threejsJourneyPrevent', 1)
-        })
+				if (!this.config.touch && !this.shown && this.traveledDistance > this.minTraveledDistance) {
+					this.start()
+				}
+			}
+		})
+	}
 
-        this.$no.addEventListener('click', () =>
-        {
-            this.next()
+	setYesNo() {
+		// Clicks
+		this.$yes.addEventListener('click', () => {
+			gsap.delayedCall(2, () => {
+				this.hide()
+			})
+			window.localStorage.setItem('threejsJourneyPrevent', 1)
+		})
 
-            gsap.delayedCall(5, () =>
-            {
-                this.hide()
-            })
-        })
+		this.$no.addEventListener('click', () => {
+			this.next()
 
-        // Hovers
-        this.$yes.addEventListener('mouseenter', () =>
-        {
-            this.$container.classList.remove('is-hover-none')
-            this.$container.classList.remove('is-hover-no')
-            this.$container.classList.add('is-hover-yes')
-        })
+			gsap.delayedCall(5, () => {
+				this.hide()
+			})
+		})
 
-        this.$no.addEventListener('mouseenter', () =>
-        {
-            this.$container.classList.remove('is-hover-none')
-            this.$container.classList.add('is-hover-no')
-            this.$container.classList.remove('is-hover-yes')
-        })
+		// Hovers
+		this.$yes.addEventListener('mouseenter', () => {
+			this.$container.classList.remove('is-hover-none')
+			this.$container.classList.remove('is-hover-no')
+			this.$container.classList.add('is-hover-yes')
+		})
 
-        this.$yes.addEventListener('mouseleave', () =>
-        {
-            this.$container.classList.add('is-hover-none')
-            this.$container.classList.remove('is-hover-no')
-            this.$container.classList.remove('is-hover-yes')
-        })
+		this.$no.addEventListener('mouseenter', () => {
+			this.$container.classList.remove('is-hover-none')
+			this.$container.classList.add('is-hover-no')
+			this.$container.classList.remove('is-hover-yes')
+		})
 
-        this.$no.addEventListener('mouseleave', () =>
-        {
-            this.$container.classList.add('is-hover-none')
-            this.$container.classList.remove('is-hover-no')
-            this.$container.classList.remove('is-hover-yes')
-        })
-    }
+		this.$yes.addEventListener('mouseleave', () => {
+			this.$container.classList.add('is-hover-none')
+			this.$container.classList.remove('is-hover-no')
+			this.$container.classList.remove('is-hover-yes')
+		})
 
-    setLog()
-    {
-//         console.log(
-//             `%c 
-// ▶
-// ▶▶▶▶
-// ▶▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶▶     ▶
-// ▶▶▶▶      ▶▶▶▶▶▶▶▶
-// ▶     ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
-//    ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
-//       ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶      
-// ▶▶        ▶▶▶▶▶▶▶▶▶▶     ▶   ▶▶▶
-// ▶▶▶▶▶▶        ▶      ▶▶▶▶▶   ▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶▶▶▶▶       ▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶
-// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶
-//  ▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶
-//      ▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶
-// ▶▶▶▶     ▶▶▶▶   ▶▶▶
-// ▶▶▶▶▶▶▶     ▶   
-// ▶▶▶▶▶▶▶▶▶▶
-// ▶▶▶▶▶▶▶
-// ▶▶
-//             `,
-//             'color: #705df2;'
-//         )
-        console.log('%cWhat are you doing here?! you sneaky developer...', 'color: #32ffce');
-        console.log('%cDo you want to learn how this portfolio has been made?', 'color: #32ffce');
-        console.log('%cCheckout Three.js Journey 👉 https://threejs-journey.com?c=p2', 'color: #32ffce');
-        console.log('%c— Bruno', 'color: #777777');
-    }
+		this.$no.addEventListener('mouseleave', () => {
+			this.$container.classList.add('is-hover-none')
+			this.$container.classList.remove('is-hover-no')
+			this.$container.classList.remove('is-hover-yes')
+		})
+	}
 
-    hide()
-    {
-        for(const _$message of this.$messages)
-        {
-            _$message.classList.remove('is-visible')
-        }
+	setLog() {
+		//         console.log(
+		//             `%c
+		// ▶
+		// ▶▶▶▶
+		// ▶▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶▶     ▶
+		// ▶▶▶▶      ▶▶▶▶▶▶▶▶
+		// ▶     ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
+		//    ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
+		//       ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
+		// ▶▶        ▶▶▶▶▶▶▶▶▶▶     ▶   ▶▶▶
+		// ▶▶▶▶▶▶        ▶      ▶▶▶▶▶   ▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶▶▶▶▶       ▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶
+		// ▶▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶   ▶
+		//  ▶▶▶▶▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶▶▶▶
+		//      ▶▶▶▶▶▶▶▶   ▶▶▶▶▶▶▶
+		// ▶▶▶▶     ▶▶▶▶   ▶▶▶
+		// ▶▶▶▶▶▶▶     ▶
+		// ▶▶▶▶▶▶▶▶▶▶
+		// ▶▶▶▶▶▶▶
+		// ▶▶
+		//             `,
+		//             'color: #705df2;'
+		//         )
+		console.log('%cWhat are you doing here?! you sneaky developer...', 'color: #32ffce')
+		console.log('%cDo you want to learn how this portfolio has been made?', 'color: #32ffce')
+		console.log('%cCheckout Three.js Journey 👉 https://threejs-journey.com?c=p2', 'color: #32ffce')
+		console.log('%c— Bruno', 'color: #777777')
+	}
 
-        gsap.delayedCall(0.5, () =>
-        {
-            this.$container.classList.remove('is-active')
-        })
-    }
+	hide() {
+		for (const _$message of this.$messages) {
+			_$message.classList.remove('is-visible')
+		}
 
-    start()
-    {
-        this.$container.classList.add('is-active')
+		gsap.delayedCall(0.5, () => {
+			this.$container.classList.remove('is-active')
+		})
+	}
 
-        window.requestAnimationFrame(() =>
-        {
-            this.next()
+	start() {
+		this.$container.classList.add('is-active')
 
-            gsap.delayedCall(4, () =>
-            {
-                this.next()
-            })
-            gsap.delayedCall(7, () =>
-            {
-                this.next()
-            })
-        })
+		window.requestAnimationFrame(() => {
+			this.next()
 
-        this.shown = true
-        
-        window.localStorage.setItem('threejsJourneySeenCount', this.seenCount + 1)
-    }
+			gsap.delayedCall(4, () => {
+				this.next()
+			})
+			gsap.delayedCall(7, () => {
+				this.next()
+			})
+		})
 
-    updateMessages()
-    {
-        let i = 0
+		this.shown = true
 
-        // Visibility
-        for(const _$message of this.$messages)
-        {
-            if(i < this.step)
-                _$message.classList.add('is-visible')
+		window.localStorage.setItem('threejsJourneySeenCount', this.seenCount + 1)
+	}
 
-            i++
-        }
+	updateMessages() {
+		let i = 0
 
-        // Position
-        this.$messages.reverse()
+		// Visibility
+		for (const _$message of this.$messages) {
+			if (i < this.step) _$message.classList.add('is-visible')
 
-        let height = 0
-        i = this.maxStep
-        for(const _$message of this.$messages)
-        {
-            const messageHeight = _$message.offsetHeight
-            if(i < this.step)
-            {
-                _$message.style.transform = `translateY(${- height}px)`
-                height += messageHeight + 20
-            }
-            else
-            {
-                _$message.style.transform = `translateY(${messageHeight}px)`
-            }
+			i++
+		}
 
-            i--
-        }
+		// Position
+		this.$messages.reverse()
 
+		let height = 0
+		i = this.maxStep
+		for (const _$message of this.$messages) {
+			const messageHeight = _$message.offsetHeight
+			if (i < this.step) {
+				_$message.style.transform = `translateY(${-height}px)`
+				height += messageHeight + 20
+			} else {
+				_$message.style.transform = `translateY(${messageHeight}px)`
+			}
 
-        this.$messages.reverse()
-    }
+			i--
+		}
 
-    next()
-    {
-        if(this.step > this.maxStep)
-            return
+		this.$messages.reverse()
+	}
 
-        this.step++
+	next() {
+		if (this.step > this.maxStep) return
 
-        this.updateMessages()
-    }
+		this.step++
+
+		this.updateMessages()
+	}
 }
