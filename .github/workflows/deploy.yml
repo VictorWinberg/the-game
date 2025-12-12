@@ -33,6 +33,8 @@ jobs:
 
             - name: Build
               run: npm run build
+              env:
+                  BASE_PATH: '/the-game/'
 
             - name: Setup Pages
               uses: actions/configure-pages@v4
