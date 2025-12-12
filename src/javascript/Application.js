@@ -11,6 +11,7 @@ import Chat from './Chat.js'
 import DuncanBot from './DuncanBot.js'
 import ClaudeBot from './ClaudeBot.js'
 import GogginsBot from './GogginsBot.js'
+import JonteBot from './JonteBot.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
@@ -55,6 +56,7 @@ export default class Application {
 		this.setDuncanBot()
 		this.setClaudeBot()
 		this.setGogginsBot()
+		this.setJonteBot()
 	}
 
 	/**
@@ -495,6 +497,12 @@ export default class Application {
 
 	setGogginsBot() {
 		this.gogginsBot = new GogginsBot({
+			chat: this.chat
+		})
+	}
+
+	setJonteBot() {
+		this.jonteBot = new JonteBot({
 			chat: this.chat
 		})
 	}
