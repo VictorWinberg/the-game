@@ -119,6 +119,10 @@ export default class Controls extends EventEmitter {
 				case 'KeyR':
 					this.trigger('action', ['reset'])
 					break
+
+				case 'KeyY':
+					this.trigger('action', ['respawn'])
+					break
 			}
 		}
 

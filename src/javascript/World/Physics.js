@@ -324,6 +324,15 @@ export default class Physics {
 				case 'reset':
 					this.car.recreate()
 					break
+
+				case 'respawn':
+					// Teleport car back to starting line
+					this.car.chassis.body.position.set(0, 0, 12)
+					this.car.chassis.body.velocity.set(0, 0, 0)
+					this.car.chassis.body.angularVelocity.set(0, 0, 0)
+					this.car.chassis.body.quaternion.set(0, 0, 0, 1)
+					this.car.chassis.body.wakeUp()
+					break
 			}
 		})
 
