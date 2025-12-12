@@ -43,6 +43,31 @@
 
     <canvas class="canvas js-canvas"></canvas>
 
+    <!-- Game Menu -->
+    <div class="game-menu js-game-menu">
+        <div class="game-menu-content">
+            <h1 class="game-menu-title">The Game</h1>
+
+            <div class="game-menu-section">
+                <label class="game-menu-label">Enter Your Name</label>
+                <input type="text" class="game-menu-name-input js-game-menu-name" placeholder="Player" maxlength="16">
+            </div>
+
+            <div class="game-menu-section">
+                <label class="game-menu-label">Choose Your Car</label>
+                <div class="game-menu-colors js-game-menu-colors">
+                    <button class="game-menu-color selected" data-color="orange" style="background: #ff8908;"></button>
+                    <button class="game-menu-color" data-color="blue" style="background: #4a90d9;"></button>
+                    <button class="game-menu-color" data-color="red" style="background: #d94a4a;"></button>
+                    <button class="game-menu-color" data-color="green" style="background: #4ad94a;"></button>
+                    <button class="game-menu-color" data-color="purple" style="background: #9b4ad9;"></button>
+                </div>
+            </div>
+
+            <button class="game-menu-play js-game-menu-play">PLAY</button>
+        </div>
+    </div>
+
     <div class="chat js-chat">
         <div class="chat-header">
             <div class="chat-title">Global Chat</div>
@@ -86,6 +111,104 @@
     </div>
 
     <style>
+        /* Game Menu Styles */
+        .game-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            font-family: 'Comic Neue', sans-serif;
+        }
+        .game-menu.hidden {
+            display: none;
+        }
+        .game-menu-content {
+            background: rgba(30, 30, 35, 0.95);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid rgba(255, 137, 8, 0.5);
+            box-shadow: 0 0 40px rgba(255, 137, 8, 0.2);
+        }
+        .game-menu-title {
+            color: #ff8908;
+            font-size: 48px;
+            margin: 0 0 30px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .game-menu-section {
+            margin-bottom: 25px;
+        }
+        .game-menu-label {
+            display: block;
+            color: white;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .game-menu-name-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Comic Neue', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            width: 200px;
+            text-align: center;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .game-menu-name-input:focus {
+            box-shadow: 0 0 0 3px rgba(255, 137, 8, 0.5);
+        }
+        .game-menu-colors {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .game-menu-color {
+            width: 50px;
+            height: 50px;
+            border: 4px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .game-menu-color:hover {
+            transform: scale(1.1);
+        }
+        .game-menu-color.selected {
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+        .game-menu-play {
+            background: linear-gradient(135deg, #ff8908, #ff6600);
+            border: none;
+            color: white;
+            padding: 15px 60px;
+            font-family: 'Comic Neue', sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .game-menu-play:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255, 137, 8, 0.4);
+        }
+        .game-menu-play:active {
+            transform: scale(0.98);
+        }
+
         .multiplayer-ui {
             position: fixed;
             top: 20px;

@@ -18,6 +18,8 @@ export default class Car {
 		this.debug = _options.debug
 		this.config = _options.config
 		this.network = _options.network
+		this.color = _options.color || 'orange'
+		this.username = _options.username
 
 		// Set up
 		this.container = new THREE.Object3D()
@@ -32,6 +34,7 @@ export default class Car {
 		this.setModels()
 		this.setMovement()
 		this.setChassis()
+		this.setUsernameLabel()
 		this.setAntena()
 		this.setBackLights()
 		this.setWheels()
@@ -106,6 +109,9 @@ export default class Car {
 		this.chassis.oldPosition = this.chassis.object.position.clone()
 		this.container.add(this.chassis.object)
 
+		// Apply car color
+		this.applyColor(this.color)
+
 		this.shadows.add(this.chassis.object, { sizeX: 3, sizeY: 2, offsetZ: 0.2 })
 
 		// Time tick
@@ -122,6 +128,102 @@ export default class Car {
 			// Update position
 			this.position.copy(this.chassis.object.position)
 		})
+	}
+
+	setUsernameLabel() {
+		if (!this.username) return
+		if (!this.chassis || !this.chassis.object) return
+
+		const canvas = document.createElement('canvas')
+		canvas.width = 512
+		canvas.height = 128
+
+		const context = canvas.getContext('2d')
+		if (!context) return
+
+		// Background
+		const paddingX = 28
+		const paddingY = 18
+		const fontSize = 54
+		const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		context.font = font
+		context.textBaseline = 'middle'
+		context.textAlign = 'center'
+
+		const text = String(this.username).slice(0, 24)
+		const textMetrics = context.measureText(text)
+		const textWidth = Math.ceil(textMetrics.width)
+
+		const boxWidth = Math.min(canvas.width - paddingX * 2, textWidth + paddingX * 2)
+		const boxHeight = fontSize + paddingY * 2
+		const boxX = (canvas.width - boxWidth) * 0.5
+		const boxY = (canvas.height - boxHeight) * 0.5
+		const radius = 26
+
+		context.clearRect(0, 0, canvas.width, canvas.height)
+
+		// Rounded rect helper
+		const roundRect = (_x, _y, _w, _h, _r) => {
+			const r = Math.min(_r, _w * 0.5, _h * 0.5)
+			context.beginPath()
+			context.moveTo(_x + r, _y)
+			context.lineTo(_x + _w - r, _y)
+			context.quadraticCurveTo(_x + _w, _y, _x + _w, _y + r)
+			context.lineTo(_x + _w, _y + _h - r)
+			context.quadraticCurveTo(_x + _w, _y + _h, _x + _w - r, _y + _h)
+			context.lineTo(_x + r, _y + _h)
+			context.quadraticCurveTo(_x, _y + _h, _x, _y + _h - r)
+			context.lineTo(_x, _y + r)
+			context.quadraticCurveTo(_x, _y, _x + r, _y)
+			context.closePath()
+		}
+
+		// Shadow
+		context.fillStyle = 'rgba(0, 0, 0, 0.35)'
+		roundRect(boxX + 3, boxY + 4, boxWidth, boxHeight, radius)
+		context.fill()
+
+		// Fill
+		context.fillStyle = 'rgba(20, 20, 24, 0.85)'
+		roundRect(boxX, boxY, boxWidth, boxHeight, radius)
+		context.fill()
+
+		// Stroke
+		context.strokeStyle = 'rgba(255, 255, 255, 0.18)'
+		context.lineWidth = 4
+		roundRect(boxX, boxY, boxWidth, boxHeight, radius)
+		context.stroke()
+
+		// Text
+		context.font = font
+		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
+		context.fillText(text, canvas.width * 0.5, canvas.height * 0.5 + 2)
+
+		const texture = new THREE.CanvasTexture(canvas)
+		texture.colorSpace = THREE.SRGBColorSpace
+		texture.needsUpdate = true
+
+		const material = new THREE.SpriteMaterial({
+			map: texture,
+			transparent: true,
+			depthTest: true,
+			depthWrite: false
+		})
+		material.toneMapped = false
+
+		const sprite = new THREE.Sprite(material)
+		sprite.center.set(0.5, 0.0) // anchor bottom-center
+		sprite.position.set(0, 0, 1.9)
+
+		// World size
+		const worldWidth = 2.6
+		const worldHeight = worldWidth * (canvas.height / canvas.width)
+		sprite.scale.set(worldWidth, worldHeight, 1)
+
+		sprite.renderOrder = 10
+
+		this.usernameLabel = { canvas, context, texture, material, sprite }
+		this.chassis.object.add(sprite)
 	}
 
 	setAntena() {
@@ -488,6 +590,19 @@ export default class Car {
 						position: { x: this.position.x, y: this.position.y, z: this.position.z }
 					})
 				}
+			}
+		})
+	}
+
+	applyColor(colorName) {
+		if (!this.materials || !this.materials.items[colorName]) return
+
+		const material = this.materials.items[colorName]
+
+		// Apply to all mesh children of chassis
+		this.chassis.object.traverse((child) => {
+			if (child.isMesh && child.material) {
+				child.material = material
 			}
 		})
 	}

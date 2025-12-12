@@ -30,6 +30,12 @@ export default class Application {
 		this.sizes = new Sizes()
 		this.resources = new Resources()
 
+		// Player data from menu
+		this.playerData = {
+			username: 'Player',
+			color: 'orange'
+		}
+
 		this.setConfig()
 		this.setDebug()
 		this.setRenderer()
@@ -42,6 +48,7 @@ export default class Application {
 		this.setChat()
 		this.setMultiplayerUI()
 		this.setGasTank()
+		this.setGameMenu()
 	}
 
 	/**
@@ -413,6 +420,59 @@ export default class Application {
 
 	setGasTank() {
 		this.gasTank = new GasTank()
+	}
+	setGameMenu() {
+		this.gameMenu = {}
+		this.gameMenu.container = document.querySelector('.js-game-menu')
+		this.gameMenu.nameInput = document.querySelector('.js-game-menu-name')
+		this.gameMenu.colorsContainer = document.querySelector('.js-game-menu-colors')
+		this.gameMenu.playBtn = document.querySelector('.js-game-menu-play')
+
+		if (!this.gameMenu.container) return
+
+		// Color selection
+		this.gameMenu.colorsContainer.addEventListener('click', (e) => {
+			const colorBtn = e.target.closest('.game-menu-color')
+			if (!colorBtn) return
+
+			// Remove selected from all
+			this.gameMenu.colorsContainer.querySelectorAll('.game-menu-color').forEach((btn) => {
+				btn.classList.remove('selected')
+			})
+
+			// Add selected to clicked
+			colorBtn.classList.add('selected')
+			this.playerData.color = colorBtn.dataset.color
+		})
+
+		// Play button
+		this.gameMenu.playBtn.addEventListener('click', () => {
+			this.startGame()
+		})
+
+		// Enter key on name input
+		this.gameMenu.nameInput.addEventListener('keypress', (e) => {
+			if (e.key === 'Enter') {
+				this.startGame()
+			}
+		})
+	}
+
+	startGame() {
+		// Get username
+		const name = this.gameMenu.nameInput.value.trim()
+		this.playerData.username = name || 'Player'
+
+		// Hide menu
+		this.gameMenu.container.classList.add('hidden')
+
+		// Pass player data to world
+		this.world.setPlayerData(this.playerData)
+
+		// Trigger the starting screen interaction (simulate click to start)
+		if (this.world.startingScreen && this.world.startingScreen.area) {
+			this.world.startingScreen.area.trigger('interact')
+		}
 	}
 
 	/**

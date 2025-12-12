@@ -45,6 +45,12 @@ export default class World {
 		// Remote players
 		this.remoteCars = new Map()
 
+		// Player data (set from game menu)
+		this.playerData = {
+			username: 'Player',
+			color: 'orange'
+		}
+
 		// Debug
 		if (this.debug) {
 			this.debugFolder = this.debug.addFolder('world')
@@ -367,9 +373,15 @@ export default class World {
 			camera: this.camera,
 			debug: this.debugFolder,
 			config: this.config,
-			network: this.network
+			network: this.network,
+			color: this.playerData.color,
+			username: this.playerData.username
 		})
 		this.container.add(this.car.container)
+	}
+
+	setPlayerData(data) {
+		this.playerData = data
 	}
 
 	setSections() {
@@ -517,7 +529,9 @@ export default class World {
 						y: chassis.velocity.y,
 						z: chassis.velocity.z
 					},
-					steering: this.physics.car.steering
+					steering: this.physics.car.steering,
+					username: this.playerData.username,
+					color: this.playerData.color
 				})
 			}
 		})
