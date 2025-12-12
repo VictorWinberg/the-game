@@ -81,8 +81,8 @@ export default class Resources extends EventEmitter {
 			{ name: 'carDefaultBackLightsBrake', source: './models/car/default/backLightsBrake.glb' },
 			{ name: 'carDefaultBackLightsReverse', source: './models/car/default/backLightsReverse.glb' },
 			{ name: 'carDefaultAntena', source: './models/car/default/antena.glb' },
-			// { name: 'carDefaultBunnyEarLeft', source: './models/car/default/bunnyEarLeft.glb' },
-			// { name: 'carDefaultBunnyEarRight', source: './models/car/default/bunnyEarRight.glb' },
+			{ name: 'carDefaultBunnyEarLeft', source: './models/car/default/bunnyEarLeft.glb' },
+			{ name: 'carDefaultBunnyEarRight', source: './models/car/default/bunnyEarRight.glb' },
 
 			// Car default
 			{ name: 'carCyberTruckChassis', source: './models/car/cyberTruck/chassis.glb' },

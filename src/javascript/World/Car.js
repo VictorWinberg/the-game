@@ -164,11 +164,11 @@ export default class Car {
 			this.antena.object.rotation.y = this.antena.localPosition.x * 0.1
 			this.antena.object.rotation.x = this.antena.localPosition.y * 0.1
 
-			// this.antena.bunnyEarLeft.rotation.y = this.antena.localPosition.x * 0.1
-			// this.antena.bunnyEarLeft.rotation.x = this.antena.localPosition.y * 0.1
+			this.antena.bunnyEarLeft.rotation.y = this.antena.localPosition.x * 0.1
+			this.antena.bunnyEarLeft.rotation.x = this.antena.localPosition.y * 0.1
 
-			// this.antena.bunnyEarRight.rotation.y = this.antena.localPosition.x * 0.1
-			// this.antena.bunnyEarRight.rotation.x = this.antena.localPosition.y * 0.1
+			this.antena.bunnyEarRight.rotation.y = this.antena.localPosition.x * 0.1
+			this.antena.bunnyEarRight.rotation.x = this.antena.localPosition.y * 0.1
 		})
 
 		// Debug
