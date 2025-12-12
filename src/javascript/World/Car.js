@@ -99,7 +99,8 @@ export default class Car {
 	setChassis() {
 		this.chassis = {}
 		this.chassis.offset = new THREE.Vector3(0, 0, -0.28)
-		this.chassis.object = this.objects.getConvertedMesh(this.models.chassis.scene.children)
+		const sceneClone = this.models.chassis.scene.clone(true)
+		this.chassis.object = this.objects.getConvertedMesh(sceneClone.children, { duplicated: true })
 		this.chassis.object.position.copy(this.physics.car.chassis.body.position)
 		this.chassis.oldPosition = this.chassis.object.position.clone()
 		this.container.add(this.chassis.object)
@@ -221,7 +222,8 @@ export default class Car {
 
 	setWheels() {
 		this.wheels = {}
-		this.wheels.object = this.objects.getConvertedMesh(this.models.wheel.scene.children)
+		const wheelSceneClone = this.models.wheel.scene.clone(true)
+		this.wheels.object = this.objects.getConvertedMesh(wheelSceneClone.children, { duplicated: true })
 		this.wheels.items = []
 
 		for (let i = 0; i < 4; i++) {

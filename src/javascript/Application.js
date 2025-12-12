@@ -282,6 +282,7 @@ export default class Application {
 			time: this.time,
 			world: this.world
 		})
+		this.world.chat = this.chat
 	}
 
 	setMultiplayerUI() {

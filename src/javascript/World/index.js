@@ -24,6 +24,7 @@ import Sounds from './Sounds.js'
 import gsap from 'gsap'
 import EasterEggs from './EasterEggs.js'
 import RemoteCar from './RemoteCar.js'
+import SimulatedDrivers from './SimulatedDrivers.js'
 
 export default class World {
 	constructor(_options) {
@@ -38,6 +39,7 @@ export default class World {
 		this.renderer = _options.renderer
 		this.passes = _options.passes
 		this.network = _options.network
+		this.chat = _options.chat || null
 
 		// Remote players
 		this.remoteCars = new Map()
@@ -77,6 +79,7 @@ export default class World {
 		this.setWalls()
 		this.setSections()
 		this.setEasterEggs()
+		this.setSimulatedDrivers()
 	}
 
 	setReveal() {
@@ -486,11 +489,24 @@ export default class World {
 		this.container.add(this.easterEggs.container)
 	}
 
-	// Multiplayer methods
+	setSimulatedDrivers() {
+		this.simulatedDrivers = new SimulatedDrivers({
+			time: this.time,
+			resources: this.resources,
+			objects: this.objects,
+			physics: this.physics,
+			shadows: this.shadows,
+			materials: this.materials,
+			config: this.config,
+			chat: this.chat,
+			debug: this.debugFolder
+		})
+		this.container.add(this.simulatedDrivers.container)
+	}
+
 	setupMultiplayer() {
 		if (!this.network) return
 
-		// Listen for network events
 		this.network.on('player-joined', (data) => {
 			this.addRemoteCar(data.id)
 		})
@@ -503,7 +519,6 @@ export default class World {
 			this.updateRemoteCar(state)
 		})
 
-		// Send local car state on each tick
 		this.time.on('tick', () => {
 			if (this.car && this.physics && this.network.connected && this.network.roomCode) {
 				const chassis = this.physics.car.chassis.body
@@ -561,7 +576,6 @@ export default class World {
 	updateRemoteCar(state) {
 		let remoteCar = this.remoteCars.get(state.id)
 
-		// Auto-create car if it doesn't exist yet
 		if (!remoteCar) {
 			this.addRemoteCar(state.id)
 			remoteCar = this.remoteCars.get(state.id)
@@ -572,7 +586,6 @@ export default class World {
 		}
 	}
 
-	// Add existing players when joining a room
 	addExistingPlayers(playerIds) {
 		for (const playerId of playerIds) {
 			this.addRemoteCar(playerId)

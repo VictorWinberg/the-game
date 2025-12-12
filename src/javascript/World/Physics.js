@@ -525,6 +525,9 @@ export default class Physics {
 		// Create the initial car
 		this.car.create()
 
+		// Store AI cars
+		this.aiCars = []
+
 		// Debug
 		if (this.debug) {
 			this.car.debugFolder = this.debugFolder.addFolder('car')
@@ -730,5 +733,97 @@ export default class Physics {
 		}
 
 		return collision
+	}
+
+	createAICarPhysics(_options) {
+		const options = _options.options || this.car.options
+		const position = _options.position || new CANNON.Vec3(0, 0, 12)
+
+		const aiCar = {}
+
+		aiCar.chassis = {}
+		aiCar.chassis.shape = new CANNON.Box(new CANNON.Vec3(options.chassisDepth * 0.5, options.chassisWidth * 0.5, options.chassisHeight * 0.5))
+
+		aiCar.chassis.body = new CANNON.Body({ mass: options.chassisMass })
+		aiCar.chassis.body.allowSleep = false
+		aiCar.chassis.body.position.set(position.x, position.y, position.z)
+		aiCar.chassis.body.addShape(aiCar.chassis.shape, options.chassisOffset)
+		aiCar.chassis.body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), -Math.PI * 0.5)
+
+		aiCar.vehicle = new CANNON.RaycastVehicle({
+			chassisBody: aiCar.chassis.body
+		})
+
+		aiCar.wheels = {}
+		aiCar.wheels.options = {
+			radius: options.wheelRadius,
+			height: options.wheelHeight,
+			suspensionStiffness: options.wheelSuspensionStiffness,
+			suspensionRestLength: options.wheelSuspensionRestLength,
+			frictionSlip: options.wheelFrictionSlip,
+			dampingRelaxation: options.wheelDampingRelaxation,
+			dampingCompression: options.wheelDampingCompression,
+			maxSuspensionForce: options.wheelMaxSuspensionForce,
+			rollInfluence: options.wheelRollInfluence,
+			maxSuspensionTravel: options.wheelMaxSuspensionTravel,
+			customSlidingRotationalSpeed: options.wheelCustomSlidingRotationalSpeed,
+			useCustomSlidingRotationalSpeed: true,
+			directionLocal: new CANNON.Vec3(0, 0, -1),
+			axleLocal: new CANNON.Vec3(0, 1, 0),
+			chassisConnectionPointLocal: new CANNON.Vec3(1, 1, 0)
+		}
+
+		aiCar.wheels.options.chassisConnectionPointLocal.set(options.wheelFrontOffsetDepth, options.wheelOffsetWidth, 0)
+		aiCar.vehicle.addWheel(aiCar.wheels.options)
+
+		aiCar.wheels.options.chassisConnectionPointLocal.set(options.wheelFrontOffsetDepth, -options.wheelOffsetWidth, 0)
+		aiCar.vehicle.addWheel(aiCar.wheels.options)
+
+		aiCar.wheels.options.chassisConnectionPointLocal.set(options.wheelBackOffsetDepth, options.wheelOffsetWidth, 0)
+		aiCar.vehicle.addWheel(aiCar.wheels.options)
+
+		aiCar.wheels.options.chassisConnectionPointLocal.set(options.wheelBackOffsetDepth, -options.wheelOffsetWidth, 0)
+		aiCar.vehicle.addWheel(aiCar.wheels.options)
+
+		aiCar.vehicle.addToWorld(this.world)
+
+		aiCar.wheels.indexes = {}
+		aiCar.wheels.indexes.frontLeft = 0
+		aiCar.wheels.indexes.frontRight = 1
+		aiCar.wheels.indexes.backLeft = 2
+		aiCar.wheels.indexes.backRight = 3
+		aiCar.wheels.bodies = []
+
+		for (const _wheelInfos of aiCar.vehicle.wheelInfos) {
+			const shape = new CANNON.Cylinder(_wheelInfos.radius, _wheelInfos.radius, aiCar.wheels.options.height, 20)
+			const body = new CANNON.Body({ mass: options.wheelMass, material: this.materials.items.wheel })
+			const quaternion = new CANNON.Quaternion()
+			quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2)
+
+			body.type = CANNON.Body.KINEMATIC
+
+			body.addShape(shape, new CANNON.Vec3(), quaternion)
+			aiCar.wheels.bodies.push(body)
+		}
+
+		this.world.addEventListener('postStep', () => {
+			for (let i = 0; i < aiCar.vehicle.wheelInfos.length; i++) {
+				aiCar.vehicle.updateWheelTransform(i)
+
+				const transform = aiCar.vehicle.wheelInfos[i].worldTransform
+				aiCar.wheels.bodies[i].position.copy(transform.position)
+				aiCar.wheels.bodies[i].quaternion.copy(transform.quaternion)
+
+				if (i === 1 || i === 3) {
+					const rotationQuaternion = new CANNON.Quaternion(0, 0, 0, 1)
+					rotationQuaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI)
+					aiCar.wheels.bodies[i].quaternion = aiCar.wheels.bodies[i].quaternion.mult(rotationQuaternion)
+				}
+			}
+		})
+
+		this.aiCars.push(aiCar)
+
+		return aiCar
 	}
 }
