@@ -70,6 +70,9 @@ export default class World {
 	}
 
 	start() {
+		if (this.started) return
+		this.started = true
+
 		window.setTimeout(() => {
 			this.camera.pan.enable()
 		}, 2000)
@@ -382,6 +385,11 @@ export default class World {
 
 	setPlayerData(data) {
 		this.playerData = data
+
+		// Update car username label if car already exists
+		if (this.car && data.username) {
+			this.car.setUsername(data.username)
+		}
 	}
 
 	setSections() {

@@ -226,6 +226,21 @@ export default class Car {
 		this.chassis.object.add(sprite)
 	}
 
+	setUsername(username) {
+		this.username = username
+
+		// Remove existing label if present
+		if (this.usernameLabel && this.usernameLabel.sprite) {
+			this.chassis.object.remove(this.usernameLabel.sprite)
+			this.usernameLabel.material.dispose()
+			this.usernameLabel.texture.dispose()
+			this.usernameLabel = null
+		}
+
+		// Create new label
+		this.setUsernameLabel()
+	}
+
 	setAntena() {
 		this.antena = {}
 

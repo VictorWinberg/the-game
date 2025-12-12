@@ -268,7 +268,11 @@ export default class Area extends EventEmitter {
 		})
 
 		window.addEventListener('keydown', (_event) => {
-			if ((_event.key === 'f' || _event.key === 'e' || _event.key === 'Enter') && this.isIn) {
+			// Don't trigger if an input element is focused (e.g., game menu name input)
+			const activeElement = document.activeElement
+			const isInputFocused = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')
+
+			if ((_event.key === 'f' || _event.key === 'e' || _event.key === 'Enter') && this.isIn && !isInputFocused) {
 				this.interact()
 			}
 		})
