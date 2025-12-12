@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import CANNON from 'cannon'
 
 export default class IntroSection {
 	constructor(_options) {
@@ -19,10 +20,10 @@ export default class IntroSection {
 		this.container.matrixAutoUpdate = false
 		this.container.updateMatrix()
 
-		this.setStatic()
+		// this.setStatic()
 		this.setInstructions()
 		this.setOtherInstructions()
-		this.setTitles()
+		this.setPyramid()
 		this.setTiles()
 		this.setDikes()
 	}
@@ -267,6 +268,75 @@ export default class IntroSection {
 		})
 	}
 
+	setPyramid() {
+		// 3D Pyramid of square blocks
+		this.pyramidBlocks = []
+		const blockSize = 0.8
+		const blockSpacing = blockSize + 0.05
+		const pyramidLayers = 4
+		// Position in front of the car
+		const pyramidX = this.x + 0
+		const pyramidY = this.y - 10
+
+		// Get white material from the materials system
+		const whiteMaterial = this.objects.materials.shades.items.white
+
+		// Create 3D pyramid - each layer is a square that gets smaller
+		for (let layer = 0; layer < pyramidLayers; layer++) {
+			const blocksPerSide = pyramidLayers - layer
+			const layerSize = blocksPerSide * blockSpacing
+			const startX = pyramidX - layerSize / 2 + blockSpacing / 2
+			const startY = pyramidY - layerSize / 2 + blockSpacing / 2
+
+			// Create a square grid of blocks for this layer
+			for (let row = 0; row < blocksPerSide; row++) {
+				for (let col = 0; col < blocksPerSide; col++) {
+					const block = {}
+
+					// Create mesh (square block)
+					block.geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize)
+					block.mesh = new THREE.Mesh(block.geometry, whiteMaterial)
+					block.mesh.position.set(startX + col * blockSpacing, startY + row * blockSpacing, blockSize / 2 + layer * blockSize)
+					this.container.add(block.mesh)
+
+					// Create physics body
+					const halfSize = blockSize / 2
+					block.shape = new CANNON.Box(new CANNON.Vec3(halfSize, halfSize, halfSize))
+					block.body = new CANNON.Body({
+						mass: 1,
+						material: this.objects.physics.materials.items.dummy
+					})
+					block.body.addShape(block.shape)
+					block.body.position.copy(block.mesh.position)
+					block.body.allowSleep = true
+					block.body.sleepSpeedLimit = 0.01
+					block.body.sleep()
+
+					// Add to physics world
+					this.objects.physics.world.addBody(block.body)
+
+					// Add collision sound
+					block.body.addEventListener('collide', (_event) => {
+						const relativeVelocity = _event.contact.getImpactVelocityAlongNormal()
+						if (Math.abs(relativeVelocity) > 0.5) {
+							this.objects.sounds.play('woodHit', relativeVelocity)
+						}
+					})
+
+					this.pyramidBlocks.push(block)
+				}
+			}
+		}
+
+		// Sync meshes with physics on each tick
+		this.time.on('tick', () => {
+			for (const block of this.pyramidBlocks) {
+				block.mesh.position.copy(block.body.position)
+				block.mesh.quaternion.copy(block.body.quaternion)
+			}
+		})
+	}
+
 	setTiles() {
 		this.tiles.add({
 			start: new THREE.Vector2(0, -4.5),
@@ -288,23 +358,21 @@ export default class IntroSection {
 		}
 
 		// this.walls.add({
-		//     object:
-		//     {
-		//         ...this.dikes.brickOptions,
-		//         rotation: new THREE.Euler(0, 0, Math.PI * 0.5)
-		//     },
-		//     shape:
-		//     {
-		//         type: 'brick',
-		//         equilibrateLastLine: true,
-		//         widthCount: 3,
-		//         heightCount: 2,
-		//         position: new THREE.Vector3(this.x + 0, this.y - 4, 0),
-		//         offsetWidth: new THREE.Vector3(1.05, 0, 0),
-		//         offsetHeight: new THREE.Vector3(0, 0, 0.45),
-		//         randomOffset: new THREE.Vector3(0, 0, 0),
-		//         randomRotation: new THREE.Vector3(0, 0, 0.2)
-		//     }
+		// 	object: {
+		// 		...this.dikes.brickOptions,
+		// 		rotation: new THREE.Euler(0, 0, Math.PI * 0.5)
+		// 	},
+		// 	shape: {
+		// 		type: 'brick',
+		// 		equilibrateLastLine: true,
+		// 		widthCount: 3,
+		// 		heightCount: 2,
+		// 		position: new THREE.Vector3(this.x + 0, this.y - 4, 0),
+		// 		offsetWidth: new THREE.Vector3(1.05, 0, 0),
+		// 		offsetHeight: new THREE.Vector3(0, 0, 0.45),
+		// 		randomOffset: new THREE.Vector3(0, 0, 0),
+		// 		randomRotation: new THREE.Vector3(0, 0, 0.2)
+		// 	}
 		// })
 
 		this.walls.add({
