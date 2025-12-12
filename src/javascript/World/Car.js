@@ -338,10 +338,9 @@ export default class Car {
 			lapCounterValue.textContent = this.lapCount.toString()
 
 			// Add a brief animation effect when lap count changes
-			lapCounterValue.style.transform = 'scale(1.2)'
-			setTimeout(() => {
-				lapCounterValue.style.transform = 'scale(1)'
-			}, 200)
+			lapCounterElement.classList.remove('lap-pulse')
+			void lapCounterElement.offsetWidth // Trigger reflow
+			lapCounterElement.classList.add('lap-pulse')
 		}
 	}
 
