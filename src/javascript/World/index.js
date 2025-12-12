@@ -90,6 +90,7 @@ export default class World {
 		this.setSections()
 		this.setEasterEggs()
 		this.setSimulatedDrivers()
+		this.setSnowflakes()
 	}
 
 	setReveal() {
@@ -496,6 +497,39 @@ export default class World {
 			debug: this.debugFolder
 		})
 		this.container.add(this.simulatedDrivers.container)
+	}
+
+	setSnowflakes() {
+		// Create snowflakes container
+		const snowContainer = document.createElement('div')
+		snowContainer.className = 'snowflakes-container'
+		snowContainer.setAttribute('aria-hidden', 'true')
+		document.body.appendChild(snowContainer)
+
+		// Create snowflakes
+		const snowflakeCount = 50
+		for (let i = 0; i < snowflakeCount; i++) {
+			const snowflake = document.createElement('div')
+			snowflake.className = 'snowflake'
+			snowflake.innerHTML = '*'
+
+			// Random properties for each snowflake
+			const size = 10 + Math.random() * 20
+			const left = Math.random() * 100
+			const animationDuration = 5 + Math.random() * 10
+			const animationDelay = Math.random() * 10
+			const opacity = 0.5 + Math.random() * 0.5
+
+			snowflake.style.cssText = `
+				left: ${left}%;
+				font-size: ${size}px;
+				animation-duration: ${animationDuration}s;
+				animation-delay: ${animationDelay}s;
+				opacity: ${opacity};
+			`
+
+			snowContainer.appendChild(snowflake)
+		}
 	}
 
 	setupMultiplayer() {
