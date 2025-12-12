@@ -18,6 +18,7 @@ export default class RemoteCar {
 
 		// Interpolation state
 		this.targetPosition = new THREE.Vector3()
+		this.currentPosition = new THREE.Vector3()
 		this.targetQuaternion = new THREE.Quaternion()
 		this.currentSteering = 0
 		this.targetSteering = 0
@@ -94,15 +95,17 @@ export default class RemoteCar {
 
 	setUpdate() {
 		this.time.on('tick', () => {
-			// Interpolate position
-			this.chassis.object.position.lerp(this.targetPosition, this.lerpFactor)
-			this.chassis.object.position.add(this.chassis.offset)
+			// Interpolate the base position (without offset)
+			this.currentPosition.lerp(this.targetPosition, this.lerpFactor)
+
+			// Apply position with offset to visual
+			this.chassis.object.position.copy(this.currentPosition).add(this.chassis.offset)
 
 			// Interpolate rotation
 			this.chassis.object.quaternion.slerp(this.targetQuaternion, this.lerpFactor)
 
 			// Update physics body to match visual position (for collisions)
-			this.body.position.copy(this.chassis.object.position)
+			this.body.position.copy(this.currentPosition)
 			this.body.quaternion.copy(this.chassis.object.quaternion)
 
 			// Interpolate steering
@@ -123,16 +126,16 @@ export default class RemoteCar {
 			const wheel = this.wheels.items[i]
 			const offset = this.wheels.offsets[i]
 
-			// Position wheel relative to chassis
-			wheel.position.copy(this.chassis.object.position)
+			// Position wheel relative to current position (not chassis visual which has offset)
+			wheel.position.copy(this.currentPosition)
 
 			// Apply offset in chassis local space
 			const worldOffset = offset.clone()
 			worldOffset.applyQuaternion(this.chassis.object.quaternion)
 			wheel.position.add(worldOffset)
 
-			// Wheel sits at ground level (adjust for radius)
-			wheel.position.z = wheelRadius
+			// Adjust wheel height relative to chassis
+			wheel.position.z = this.currentPosition.z - 0.28 + wheelRadius
 
 			// Copy chassis rotation
 			wheel.quaternion.copy(this.chassis.object.quaternion)
