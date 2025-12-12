@@ -9,6 +9,7 @@ import Camera from './Camera.js'
 import ThreejsJourney from './ThreejsJourney.js'
 import Chat from './Chat.js'
 import DuncanBot from './DuncanBot.js'
+import ClaudeBot from './ClaudeBot.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
@@ -51,6 +52,7 @@ export default class Application {
 		this.setGasTank()
 		this.setGameMenu()
 		this.setDuncanBot()
+		this.setClaudeBot()
 	}
 
 	/**
@@ -479,6 +481,12 @@ export default class Application {
 
 	setDuncanBot() {
 		this.duncanBot = new DuncanBot({
+			chat: this.chat
+		})
+	}
+
+	setClaudeBot() {
+		this.claudeBot = new ClaudeBot({
 			chat: this.chat
 		})
 	}
