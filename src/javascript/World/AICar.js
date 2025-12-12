@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import CANNON from 'cannon'
+import Songs from '../Data/Songs.js'
 
 export default class AICar {
 	constructor(_options) {
@@ -13,6 +14,12 @@ export default class AICar {
 		this.spawnPosition = _options.spawnPosition
 		this.radius = _options.radius
 		this.username = _options.username
+
+		// Now Playing (50% chance)
+		this.nowPlaying = null
+		if (Math.random() < 0.5) {
+			this.nowPlaying = Songs[Math.floor(Math.random() * Songs.length)]
+		}
 
 		this.container = new THREE.Object3D()
 		this.position = new THREE.Vector3()
@@ -78,7 +85,8 @@ export default class AICar {
 
 		const canvas = document.createElement('canvas')
 		canvas.width = 512
-		canvas.height = 128
+		// Increase height if now playing
+		canvas.height = this.nowPlaying ? 200 : 128
 
 		const context = canvas.getContext('2d')
 		if (!context) return
@@ -87,17 +95,33 @@ export default class AICar {
 		const paddingX = 28
 		const paddingY = 18
 		const fontSize = 54
+		const songFontSize = 32
 		const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		const songFont = `500 ${songFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		
 		context.font = font
 		context.textBaseline = 'middle'
 		context.textAlign = 'center'
 
 		const text = String(this.username).slice(0, 24)
 		const textMetrics = context.measureText(text)
-		const textWidth = Math.ceil(textMetrics.width)
+		let textWidth = Math.ceil(textMetrics.width)
+
+		// Calculate song text width if applicable
+		let songText = ''
+		let songTextWidth = 0
+		if (this.nowPlaying) {
+			context.font = songFont
+			songText = `🎵 ${this.nowPlaying.title} - ${this.nowPlaying.artist}`
+			const songMetrics = context.measureText(songText)
+			songTextWidth = Math.ceil(songMetrics.width)
+			
+			// Use the wider of the two texts
+			textWidth = Math.max(textWidth, songTextWidth)
+		}
 
 		const boxWidth = Math.min(canvas.width - paddingX * 2, textWidth + paddingX * 2)
-		const boxHeight = fontSize + paddingY * 2
+		const boxHeight = this.nowPlaying ? fontSize + songFontSize + paddingY * 3 : fontSize + paddingY * 2
 		const boxX = (canvas.width - boxWidth) * 0.5
 		const boxY = (canvas.height - boxHeight) * 0.5
 		const radius = 26
@@ -136,10 +160,19 @@ export default class AICar {
 		roundRect(boxX, boxY, boxWidth, boxHeight, radius)
 		context.stroke()
 
-		// Text
+		// Username Text
 		context.font = font
 		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
-		context.fillText(text, canvas.width * 0.5, canvas.height * 0.5 + 2)
+		const nameY = this.nowPlaying ? boxY + paddingY + fontSize * 0.5 : canvas.height * 0.5 + 2
+		context.fillText(text, canvas.width * 0.5, nameY)
+
+		// Song Text
+		if (this.nowPlaying) {
+			context.font = songFont
+			context.fillStyle = 'rgba(30, 215, 96, 0.9)' // Spotify green-ish
+			const songY = nameY + fontSize * 0.5 + paddingY * 0.5 + songFontSize * 0.5
+			context.fillText(songText, canvas.width * 0.5, songY)
+		}
 
 		const texture = new THREE.CanvasTexture(canvas)
 		texture.colorSpace = THREE.SRGBColorSpace

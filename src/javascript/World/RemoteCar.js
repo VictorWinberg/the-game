@@ -17,11 +17,10 @@ export default class RemoteCar {
 		this.username = _options.username || null
 		this.color = _options.color || 'orange'
 
-		// Now Playing (100% chance for debugging)
+		// Now Playing (50% chance)
 		this.nowPlaying = null
-		if (Math.random() < 1.0) {
+		if (Math.random() < 0.5) {
 			this.nowPlaying = Songs[Math.floor(Math.random() * Songs.length)]
-			console.log('RemoteCar assigned song:', this.nowPlaying)
 		}
 
 		// Container for all car meshes

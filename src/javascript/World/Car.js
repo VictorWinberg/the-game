@@ -22,9 +22,9 @@ export default class Car {
 		this.color = _options.color || 'orange'
 		this.username = _options.username
 
-		// Now Playing (100% chance for debugging)
+		// Now Playing (50% chance)
 		this.nowPlaying = null
-		if (Math.random() < 1.0) {
+		if (Math.random() < 0.5) {
 			this.nowPlaying = Songs[Math.floor(Math.random() * Songs.length)]
 		}
 
