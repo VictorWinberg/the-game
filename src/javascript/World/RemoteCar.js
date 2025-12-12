@@ -43,7 +43,8 @@ export default class RemoteCar {
 	setChassis() {
 		this.chassis = {}
 		this.chassis.offset = new THREE.Vector3(0, 0, -0.28)
-		this.chassis.object = this.objects.getConvertedMesh(this.models.chassis.scene.children)
+		const sceneClone = this.models.chassis.scene.clone(true)
+		this.chassis.object = this.objects.getConvertedMesh(sceneClone.children, { duplicated: true })
 		this.container.add(this.chassis.object)
 
 		this.shadows.add(this.chassis.object, { sizeX: 3, sizeY: 2, offsetZ: 0.2 })
@@ -51,7 +52,8 @@ export default class RemoteCar {
 
 	setWheels() {
 		this.wheels = {}
-		this.wheels.object = this.objects.getConvertedMesh(this.models.wheel.scene.children)
+		const wheelSceneClone = this.models.wheel.scene.clone(true)
+		this.wheels.object = this.objects.getConvertedMesh(wheelSceneClone.children, { duplicated: true })
 		this.wheels.items = []
 
 		// Wheel positions relative to chassis (matching Physics.js)
