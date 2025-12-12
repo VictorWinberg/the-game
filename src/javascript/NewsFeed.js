@@ -55,4 +55,28 @@ export default class NewsFeed {
 			this.$content.removeChild(this.$content.lastChild)
 		}
 	}
+
+	addLapMessage(lapCount) {
+		const templates = [
+			`BREAKING: LOCAL DRIVER COMPLETES LAP ${lapCount}, STILL NO SPONSORS`,
+			`OFFICIALS CONFIRM LAP ${lapCount} WAS "TECHNICALLY" LEGAL`,
+			`CROWD GOES MILD AS CAR FINISHES LAP ${lapCount}`,
+			`SCIENTISTS BAFFLED BY PHYSICS OF LAP ${lapCount}`
+		]
+
+		const template = templates[Math.floor(Math.random() * templates.length)]
+		const message = template.replace('${lapCount}', lapCount)
+
+		const $item = document.createElement('div')
+		$item.classList.add('news-feed-item')
+		$item.classList.add('news-feed-item-highlight') // Optional: add a class for styling if needed
+		$item.textContent = message
+		$item.style.color = '#ffc800' // Gold/yellow color to make it pop
+
+		this.$content.insertBefore($item, this.$content.firstChild)
+
+		if (this.$content.children.length > this.maxHeadlines) {
+			this.$content.removeChild(this.$content.lastChild)
+		}
+	}
 }

@@ -21,6 +21,7 @@ export default class Car {
 		this.network = _options.network
 		this.color = _options.color || 'orange'
 		this.username = _options.username
+		this.onLap = _options.onLap
 
 		// Now Playing (50% chance)
 		this.nowPlaying = null
@@ -311,6 +312,10 @@ export default class Car {
 		this.lapCount = lapCount
 		this.updateUsernameLabel()
 		this.updateLapCounterUI()
+		
+		if (this.onLap) {
+			this.onLap(lapCount)
+		}
 	}
 
 	setLapCounterUI() {

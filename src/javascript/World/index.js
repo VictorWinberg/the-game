@@ -31,6 +31,7 @@ export default class World {
 	constructor(_options) {
 		// Options
 		this.config = _options.config
+		this.config.onLap = _options.onLap
 		this.debug = _options.debug
 		this.resources = _options.resources
 		this.time = _options.time
@@ -379,7 +380,10 @@ export default class World {
 			config: this.config,
 			network: this.network,
 			color: this.playerData.color,
-			username: this.playerData.username
+			network: this.network,
+			color: this.playerData.color,
+			username: this.playerData.username,
+			onLap: this.config.onLap
 		})
 		this.container.add(this.car.container)
 	}

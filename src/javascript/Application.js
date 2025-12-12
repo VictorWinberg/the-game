@@ -249,7 +249,13 @@ export default class Application {
 			scene: this.scene,
 			renderer: this.renderer,
 			passes: this.passes,
-			network: this.network
+			passes: this.passes,
+			network: this.network,
+			onLap: (lapCount) => {
+				if (this.newsFeed) {
+					this.newsFeed.addLapMessage(lapCount)
+				}
+			}
 		})
 		this.scene.add(this.world.container)
 	}
