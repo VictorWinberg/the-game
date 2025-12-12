@@ -55,6 +55,129 @@
         </div>
     </div>
 
+    <!-- Multiplayer UI -->
+    <div class="multiplayer-ui">
+        <div class="multiplayer-controls">
+            <button class="multiplayer-host-btn">Host Game</button>
+            <div class="multiplayer-join">
+                <input type="text" class="multiplayer-code-input" placeholder="Enter code" maxlength="4">
+                <button class="multiplayer-join-btn">Join</button>
+            </div>
+        </div>
+        <div class="multiplayer-room-info">
+            <div class="multiplayer-room-header">
+                <span>Room: </span>
+                <span class="multiplayer-room-code"></span>
+                <button class="multiplayer-copy-btn">Copy</button>
+            </div>
+            <div class="multiplayer-player-count">1/4 players</div>
+            <button class="multiplayer-leave-btn">Leave</button>
+        </div>
+        <div class="multiplayer-status"></div>
+    </div>
+
+    <style>
+        .multiplayer-ui {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-family: 'Comic Neue', sans-serif;
+            color: white;
+        }
+        .multiplayer-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .multiplayer-join {
+            display: flex;
+            gap: 5px;
+        }
+        .multiplayer-host-btn,
+        .multiplayer-join-btn,
+        .multiplayer-leave-btn,
+        .multiplayer-copy-btn {
+            background: rgba(255, 137, 8, 0.9);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-family: 'Comic Neue', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .multiplayer-host-btn:hover,
+        .multiplayer-join-btn:hover,
+        .multiplayer-leave-btn:hover,
+        .multiplayer-copy-btn:hover {
+            background: rgba(255, 137, 8, 1);
+            transform: scale(1.05);
+        }
+        .multiplayer-copy-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .multiplayer-leave-btn {
+            background: rgba(200, 50, 50, 0.9);
+            margin-top: 10px;
+        }
+        .multiplayer-leave-btn:hover {
+            background: rgba(200, 50, 50, 1);
+        }
+        .multiplayer-code-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 10px;
+            font-family: 'Comic Neue', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            width: 80px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .multiplayer-code-input::placeholder {
+            color: #999;
+            text-transform: none;
+        }
+        .multiplayer-room-info {
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .multiplayer-room-info.active {
+            display: block;
+        }
+        .multiplayer-room-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .multiplayer-room-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff8908;
+            letter-spacing: 4px;
+        }
+        .multiplayer-player-count {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .multiplayer-status {
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: center;
+            min-height: 16px;
+        }
+    </style>
+
     <div class="threejs-journey is-hover-none js-threejs-journey">
         <div class="message js-message">
             <div class="boy">

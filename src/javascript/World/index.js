@@ -23,6 +23,7 @@ import Controls from './Controls.js'
 import Sounds from './Sounds.js'
 import gsap from 'gsap'
 import EasterEggs from './EasterEggs.js'
+import RemoteCar from './RemoteCar.js'
 
 export default class World {
 	constructor(_options) {
@@ -36,6 +37,10 @@ export default class World {
 		this.scene = _options.scene
 		this.renderer = _options.renderer
 		this.passes = _options.passes
+		this.network = _options.network
+
+		// Remote players
+		this.remoteCars = new Map()
 
 		// Debug
 		if (this.debug) {
@@ -479,5 +484,98 @@ export default class World {
 			physics: this.physics
 		})
 		this.container.add(this.easterEggs.container)
+	}
+
+	// Multiplayer methods
+	setupMultiplayer() {
+		if (!this.network) return
+
+		// Listen for network events
+		this.network.on('player-joined', (data) => {
+			this.addRemoteCar(data.id)
+		})
+
+		this.network.on('player-left', (data) => {
+			this.removeRemoteCar(data.id)
+		})
+
+		this.network.on('player-state', (state) => {
+			this.updateRemoteCar(state)
+		})
+
+		// Send local car state on each tick
+		this.time.on('tick', () => {
+			if (this.car && this.physics && this.network.connected && this.network.roomCode) {
+				const chassis = this.physics.car.chassis.body
+				this.network.sendState({
+					position: {
+						x: chassis.position.x,
+						y: chassis.position.y,
+						z: chassis.position.z
+					},
+					quaternion: {
+						x: chassis.quaternion.x,
+						y: chassis.quaternion.y,
+						z: chassis.quaternion.z,
+						w: chassis.quaternion.w
+					},
+					velocity: {
+						x: chassis.velocity.x,
+						y: chassis.velocity.y,
+						z: chassis.velocity.z
+					},
+					steering: this.physics.car.steering
+				})
+			}
+		})
+	}
+
+	addRemoteCar(playerId) {
+		if (this.remoteCars.has(playerId)) return
+
+		const remoteCar = new RemoteCar({
+			id: playerId,
+			time: this.time,
+			resources: this.resources,
+			objects: this.objects,
+			physics: this.physics,
+			shadows: this.shadows,
+			materials: this.materials,
+			config: this.config
+		})
+
+		this.remoteCars.set(playerId, remoteCar)
+		this.container.add(remoteCar.container)
+		console.log(`Added remote car for player ${playerId}`)
+	}
+
+	removeRemoteCar(playerId) {
+		const remoteCar = this.remoteCars.get(playerId)
+		if (!remoteCar) return
+
+		remoteCar.destroy()
+		this.remoteCars.delete(playerId)
+		console.log(`Removed remote car for player ${playerId}`)
+	}
+
+	updateRemoteCar(state) {
+		let remoteCar = this.remoteCars.get(state.id)
+
+		// Auto-create car if it doesn't exist yet
+		if (!remoteCar) {
+			this.addRemoteCar(state.id)
+			remoteCar = this.remoteCars.get(state.id)
+		}
+
+		if (remoteCar) {
+			remoteCar.updateFromNetwork(state)
+		}
+	}
+
+	// Add existing players when joining a room
+	addExistingPlayers(playerIds) {
+		for (const playerId of playerIds) {
+			this.addRemoteCar(playerId)
+		}
 	}
 }

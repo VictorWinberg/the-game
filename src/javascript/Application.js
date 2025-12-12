@@ -8,6 +8,7 @@ import Resources from './Resources.js'
 import Camera from './Camera.js'
 import ThreejsJourney from './ThreejsJourney.js'
 import Chat from './Chat.js'
+import NetworkClient from './Network/Client.js'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
@@ -33,10 +34,12 @@ export default class Application {
 		this.setRenderer()
 		this.setCamera()
 		this.setPasses()
+		this.setNetwork()
 		this.setWorld()
 		this.setTitle()
 		this.setThreejsJourney()
 		this.setChat()
+		this.setMultiplayerUI()
 	}
 
 	/**
@@ -207,6 +210,13 @@ export default class Application {
 	}
 
 	/**
+	 * Set network
+	 */
+	setNetwork() {
+		this.network = new NetworkClient()
+	}
+
+	/**
 	 * Set world
 	 */
 	setWorld() {
@@ -219,7 +229,8 @@ export default class Application {
 			camera: this.camera,
 			scene: this.scene,
 			renderer: this.renderer,
-			passes: this.passes
+			passes: this.passes,
+			network: this.network
 		})
 		this.scene.add(this.world.container)
 	}
@@ -273,6 +284,130 @@ export default class Application {
 		})
 	}
 
+	setMultiplayerUI() {
+		this.multiplayerUI = {}
+		this.multiplayerUI.container = document.querySelector('.multiplayer-ui')
+		this.multiplayerUI.hostBtn = document.querySelector('.multiplayer-host-btn')
+		this.multiplayerUI.joinBtn = document.querySelector('.multiplayer-join-btn')
+		this.multiplayerUI.codeInput = document.querySelector('.multiplayer-code-input')
+		this.multiplayerUI.roomInfo = document.querySelector('.multiplayer-room-info')
+		this.multiplayerUI.roomCode = document.querySelector('.multiplayer-room-code')
+		this.multiplayerUI.playerCount = document.querySelector('.multiplayer-player-count')
+		this.multiplayerUI.leaveBtn = document.querySelector('.multiplayer-leave-btn')
+		this.multiplayerUI.copyBtn = document.querySelector('.multiplayer-copy-btn')
+		this.multiplayerUI.status = document.querySelector('.multiplayer-status')
+
+		if (!this.multiplayerUI.container) return
+
+		this.multiplayerUI.hostBtn.addEventListener('click', async () => {
+			await this.hostGame()
+		})
+
+		this.multiplayerUI.joinBtn.addEventListener('click', async () => {
+			const code = this.multiplayerUI.codeInput.value.trim()
+			if (code) {
+				await this.joinGame(code)
+			}
+		})
+
+		this.multiplayerUI.codeInput.addEventListener('keypress', async (e) => {
+			if (e.key === 'Enter') {
+				const code = this.multiplayerUI.codeInput.value.trim()
+				if (code) {
+					await this.joinGame(code)
+				}
+			}
+		})
+
+		this.multiplayerUI.leaveBtn.addEventListener('click', () => {
+			this.leaveGame()
+		})
+
+		this.multiplayerUI.copyBtn.addEventListener('click', () => {
+			navigator.clipboard.writeText(this.network.roomCode)
+			this.multiplayerUI.copyBtn.textContent = 'Copied!'
+			setTimeout(() => {
+				this.multiplayerUI.copyBtn.textContent = 'Copy'
+			}, 1500)
+		})
+	}
+
+	async hostGame() {
+		try {
+			this.showStatus('Connecting...')
+			await this.network.connect()
+			const response = await this.network.createRoom()
+
+			this.showRoomInfo(response.code)
+			this.world.setupMultiplayer()
+			this.showStatus('Room created!')
+		} catch (error) {
+			this.showStatus('Failed to host: ' + error.message)
+		}
+	}
+
+	async joinGame(code) {
+		try {
+			this.showStatus('Joining...')
+			await this.network.connect()
+			const response = await this.network.joinRoom(code)
+
+			this.showRoomInfo(response.code)
+			this.world.setupMultiplayer()
+			this.world.addExistingPlayers(response.players)
+			this.showStatus('Joined room!')
+		} catch (error) {
+			this.showStatus('Failed to join: ' + error.message)
+		}
+	}
+
+	leaveGame() {
+		this.network.disconnect()
+		this.hideRoomInfo()
+		this.showStatus('')
+
+		for (const [id] of this.world.remoteCars) {
+			this.world.removeRemoteCar(id)
+		}
+	}
+
+	showRoomInfo(code) {
+		this.multiplayerUI.roomInfo.classList.add('active')
+		this.multiplayerUI.hostBtn.style.display = 'none'
+		this.multiplayerUI.joinBtn.style.display = 'none'
+		this.multiplayerUI.codeInput.style.display = 'none'
+		this.multiplayerUI.roomCode.textContent = code
+		this.updatePlayerCount()
+
+		this.playerCountInterval = setInterval(() => {
+			this.updatePlayerCount()
+		}, 2000)
+	}
+
+	hideRoomInfo() {
+		this.multiplayerUI.roomInfo.classList.remove('active')
+		this.multiplayerUI.hostBtn.style.display = ''
+		this.multiplayerUI.joinBtn.style.display = ''
+		this.multiplayerUI.codeInput.style.display = ''
+
+		if (this.playerCountInterval) {
+			clearInterval(this.playerCountInterval)
+		}
+	}
+
+	async updatePlayerCount() {
+		const info = await this.network.getRoomInfo()
+		if (info.success) {
+			this.multiplayerUI.playerCount.textContent = `${info.playerCount}/${info.maxPlayers} players`
+		}
+	}
+
+	showStatus(message) {
+		if (this.multiplayerUI.status) {
+			this.multiplayerUI.status.textContent = message
+		}
+	}
+
 	/**
 	 * Destructor
 	 */
@@ -283,5 +418,9 @@ export default class Application {
 		this.camera.orbitControls.dispose()
 		this.renderer.dispose()
 		this.debug.destroy()
+
+		if (this.network) {
+			this.network.disconnect()
+		}
 	}
 }
