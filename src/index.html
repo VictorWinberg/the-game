@@ -1,364 +1,497 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+	<head>
+		<meta charset="UTF-8" />
 
-    <title>The Game</title>
-    <meta name="description" content="Drive around in a 3D world, explore the map, and have fun with The Game!" />
+		<title>The Game</title>
+		<meta name="description" content="Drive around in a 3D world, explore the map, and have fun with The Game!" />
 
-    <meta itemprop=name content="The Game">
-    <meta itemprop="description" content="Drive around in a 3D world, explore the map, and have fun with The Game!">
-    <meta itemprop="image" content="/social/share-1200x630.png">
+		<meta itemprop="name" content="The Game" />
+		<meta itemprop="description" content="Drive around in a 3D world, explore the map, and have fun with The Game!" />
+		<meta itemprop="image" content="/social/share-1200x630.png" />
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="The Game">
-    <meta name="twitter:description" content="Drive around in a 3D world, explore the map, and have fun with The Game!">
-    <meta name="twitter:image" content="/social/share-1200x600.png">
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="The Game" />
+		<meta name="twitter:description" content="Drive around in a 3D world, explore the map, and have fun with The Game!" />
+		<meta name="twitter:image" content="/social/share-1200x600.png" />
 
-    <meta property="og:site_name" content="The Game">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="">
-    <meta property="og:title" content="The Game">
-    <meta property="og:description" content="Drive around in a 3D world, explore the map, and have fun with The Game!">
-    <meta property="og:image" content="/social/share-1200x630.png">
+		<meta property="og:site_name" content="The Game" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="" />
+		<meta property="og:title" content="The Game" />
+		<meta property="og:description" content="Drive around in a 3D world, explore the map, and have fun with The Game!" />
+		<meta property="og:image" content="/social/share-1200x630.png" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
-    <link rel="manifest" href="/favicon/site.webmanifest">
-    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#ff8908">
-    <meta name="apple-mobile-web-app-title" content="Bruno Simon">
-    <meta name="application-name" content="Bruno Simon">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="theme-color" content="#ffffff">
+		<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+		<link rel="manifest" href="/favicon/site.webmanifest" />
+		<link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#ff8908" />
+		<meta name="apple-mobile-web-app-title" content="Bruno Simon" />
+		<meta name="application-name" content="Bruno Simon" />
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#ffffff" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=block" rel="stylesheet">
-</head>
-<body>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=block" rel="stylesheet" />
+	</head>
+	<body>
+		<canvas class="canvas js-canvas"></canvas>
 
-    <canvas class="canvas js-canvas"></canvas>
+		<div class="chat js-chat">
+			<div class="chat-header">
+				<div class="chat-title">Global Chat</div>
+				<div class="chat-online">127 online</div>
+			</div>
+			<div class="chat-messages js-chat-messages"></div>
+			<div class="chat-input-container">
+				<input type="text" class="chat-input js-chat-input" placeholder="Type a message..." maxlength="200" />
+				<button class="chat-send js-chat-send">Send</button>
+			</div>
+		</div>
 
-    <!-- Game Menu -->
-    <div class="game-menu js-game-menu">
-        <div class="game-menu-content">
-            <h1 class="game-menu-title">The Game</h1>
+		<!-- Game Menu -->
+		<div class="game-menu js-game-menu">
+			<div class="game-menu-content">
+				<h1 class="game-menu-title">The Game</h1>
 
-            <div class="game-menu-section">
-                <label class="game-menu-label">Enter Your Name</label>
-                <input type="text" class="game-menu-name-input js-game-menu-name" placeholder="Player" maxlength="16">
-            </div>
+				<div class="game-menu-section">
+					<label class="game-menu-label">Enter Your Name</label>
+					<input type="text" class="game-menu-name-input js-game-menu-name" placeholder="Player" maxlength="16" />
+				</div>
 
-            <div class="game-menu-section">
-                <label class="game-menu-label">Choose Your Car</label>
-                <div class="game-menu-colors js-game-menu-colors">
-                    <button class="game-menu-color selected" data-color="orange" style="background: #ff8908;"></button>
-                    <button class="game-menu-color" data-color="blue" style="background: #4a90d9;"></button>
-                    <button class="game-menu-color" data-color="red" style="background: #d94a4a;"></button>
-                    <button class="game-menu-color" data-color="green" style="background: #4ad94a;"></button>
-                    <button class="game-menu-color" data-color="purple" style="background: #9b4ad9;"></button>
-                </div>
-            </div>
+				<div class="game-menu-section">
+					<label class="game-menu-label">Choose Your Car</label>
+					<div class="game-menu-colors js-game-menu-colors">
+						<button class="game-menu-color selected" data-color="orange" style="background: #ff8908"></button>
+						<button class="game-menu-color" data-color="blue" style="background: #4a90d9"></button>
+						<button class="game-menu-color" data-color="red" style="background: #d94a4a"></button>
+						<button class="game-menu-color" data-color="green" style="background: #4ad94a"></button>
+						<button class="game-menu-color" data-color="purple" style="background: #9b4ad9"></button>
+					</div>
+				</div>
 
-            <button class="game-menu-play js-game-menu-play">PLAY</button>
-        </div>
-    </div>
+				<button class="game-menu-play js-game-menu-play">PLAY</button>
+			</div>
+		</div>
 
-    <div class="chat js-chat">
-        <div class="chat-header">
-            <div class="chat-title">Global Chat</div>
-            <div class="chat-online">127 online</div>
-        </div>
-        <div class="chat-messages js-chat-messages"></div>
-        <div class="chat-input-container">
-            <input type="text" class="chat-input js-chat-input" placeholder="Type a message..." maxlength="200">
-            <button class="chat-send js-chat-send">Send</button>
-        </div>
-    </div>
+		<div class="chat js-chat">
+			<div class="chat-header">
+				<div class="chat-title">Global Chat</div>
+				<div class="chat-online">127 online</div>
+			</div>
+			<div class="chat-messages js-chat-messages"></div>
+			<div class="chat-input-container">
+				<input type="text" class="chat-input js-chat-input" placeholder="Type a message..." maxlength="200" />
+				<button class="chat-send js-chat-send">Send</button>
+			</div>
+		</div>
 
-    <!-- Multiplayer UI -->
-    <div class="multiplayer-ui">
-        <div class="multiplayer-controls">
-            <button class="multiplayer-host-btn">Host Game</button>
-            <div class="multiplayer-join">
-                <input type="text" class="multiplayer-code-input" placeholder="Enter code" maxlength="4">
-                <button class="multiplayer-join-btn">Join</button>
-            </div>
-        </div>
-        <div class="multiplayer-room-info">
-            <div class="multiplayer-room-header">
-                <span>Room: </span>
-                <span class="multiplayer-room-code"></span>
-                <button class="multiplayer-copy-btn">Copy</button>
-            </div>
-            <div class="multiplayer-player-count">1/4 players</div>
-            <button class="multiplayer-leave-btn">Leave</button>
-        </div>
-        <div class="multiplayer-status"></div>
-    </div>
+		<style>
+			.multiplayer-ui {
+				position: fixed;
+				top: 20px;
+				right: 20px;
+				z-index: 1000;
+				font-family: 'Comic Neue', sans-serif;
+				color: white;
+			}
+			.multiplayer-controls {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.multiplayer-join {
+				display: flex;
+				gap: 5px;
+			}
+			.multiplayer-host-btn,
+			.multiplayer-join-btn,
+			.multiplayer-leave-btn,
+			.multiplayer-copy-btn {
+				background: rgba(255, 137, 8, 0.9);
+				border: none;
+				color: white;
+				padding: 10px 20px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 14px;
+				font-weight: bold;
+				border-radius: 8px;
+				cursor: pointer;
+				transition:
+					background 0.2s,
+					transform 0.1s;
+			}
+			.multiplayer-host-btn:hover,
+			.multiplayer-join-btn:hover,
+			.multiplayer-leave-btn:hover,
+			.multiplayer-copy-btn:hover {
+				background: rgba(255, 137, 8, 1);
+				transform: scale(1.05);
+			}
+			.multiplayer-copy-btn {
+				padding: 5px 10px;
+				font-size: 12px;
+			}
+			.multiplayer-leave-btn {
+				background: rgba(200, 50, 50, 0.9);
+				margin-top: 10px;
+			}
+			.multiplayer-leave-btn:hover {
+				background: rgba(200, 50, 50, 1);
+			}
+			.multiplayer-code-input {
+				background: rgba(255, 255, 255, 0.9);
+				border: none;
+				padding: 10px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 14px;
+				font-weight: bold;
+				border-radius: 8px;
+				width: 80px;
+				text-transform: uppercase;
+				text-align: center;
+			}
+			.multiplayer-code-input::placeholder {
+				color: #999;
+				text-transform: none;
+			}
+			.multiplayer-room-info {
+				display: none;
+				background: rgba(0, 0, 0, 0.7);
+				padding: 15px;
+				border-radius: 10px;
+				text-align: center;
+			}
+			.multiplayer-room-info.active {
+				display: block;
+			}
+			.multiplayer-room-header {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+			.multiplayer-room-code {
+				font-size: 24px;
+				font-weight: bold;
+				color: #ff8908;
+				letter-spacing: 4px;
+			}
+			.multiplayer-player-count {
+				font-size: 14px;
+				opacity: 0.8;
+			}
+			.multiplayer-status {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: center;
+				min-height: 16px;
+			}
+		</style>
 
-    <!-- Gas Tank -->
-    <div class="gas-tank js-gas-tank">
-        <div class="gas-tank-label">FUEL</div>
-        <div class="gas-tank-gauge">
-            <div class="gas-tank-level js-gas-tank-level"></div>
-        </div>
-        <div class="gas-tank-icon">⛽</div>
-    </div>
+		<div class="threejs-journey is-hover-none js-threejs-journey">
+			<div class="message js-message">
+				<div class="boy">
+					<div class="variant is-hi">
+						<div class="body"></div>
+						<div class="arm js-boy-arm"></div>
+					</div>
+					<div class="variant is-yay"></div>
+					<div class="variant is-shrugging"></div>
+				</div>
+				<div class="bubble">
+					<div class="text">Hey! You seem to need some help - you're not a very good driver!</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+			<div class="message js-message">
+				<div class="bubble">
+					<div class="text">Would you like to go to driving school and get your license?</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+			<div class="message js-message is-answers">
+				<a href="#" class="answer is-no js-no">
+					<span class="background"></span>
+					<span class="hover"></span>
+					<span class="label">Nah, I'm good</span>
+				</a>
+				<a href="https://www.trafikverket.se/" target="_blank" rel="noopener" class="answer is-yes js-yes">
+					<span class="background"></span>
+					<span class="hover"></span>
+					<span class="label">Yes, get my license!</span>
+				</a>
+			</div>
+			<div class="message js-message">
+				<div class="bubble">
+					<div class="text">Alright then.<br />Have fun and try not to crash!</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+		</div>
 
-    <style>
-        /* Game Menu Styles */
-        .game-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            font-family: 'Comic Neue', sans-serif;
-        }
-        .game-menu.hidden {
-            display: none;
-        }
-        .game-menu-content {
-            background: rgba(30, 30, 35, 0.95);
-            padding: 40px 60px;
-            border-radius: 20px;
-            text-align: center;
-            border: 3px solid rgba(255, 137, 8, 0.5);
-            box-shadow: 0 0 40px rgba(255, 137, 8, 0.2);
-        }
-        .game-menu-title {
-            color: #ff8908;
-            font-size: 48px;
-            margin: 0 0 30px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        .game-menu-section {
-            margin-bottom: 25px;
-        }
-        .game-menu-label {
-            display: block;
-            color: white;
-            font-size: 18px;
-            margin-bottom: 12px;
-        }
-        .game-menu-name-input {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            padding: 12px 20px;
-            font-family: 'Comic Neue', sans-serif;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 10px;
-            width: 200px;
-            text-align: center;
-            outline: none;
-            transition: box-shadow 0.2s;
-        }
-        .game-menu-name-input:focus {
-            box-shadow: 0 0 0 3px rgba(255, 137, 8, 0.5);
-        }
-        .game-menu-colors {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        .game-menu-color {
-            width: 50px;
-            height: 50px;
-            border: 4px solid transparent;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        }
-        .game-menu-color:hover {
-            transform: scale(1.1);
-        }
-        .game-menu-color.selected {
-            border-color: white;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-            transform: scale(1.1);
-        }
-        .game-menu-play {
-            background: linear-gradient(135deg, #ff8908, #ff6600);
-            border: none;
-            color: white;
-            padding: 15px 60px;
-            font-family: 'Comic Neue', sans-serif;
-            font-size: 24px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
-        }
-        .game-menu-play:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(255, 137, 8, 0.4);
-        }
-        .game-menu-play:active {
-            transform: scale(0.98);
-        }
+		<style>
+			/* Game Menu Styles */
+			.game-menu {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.85);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				z-index: 2000;
+				font-family: 'Comic Neue', sans-serif;
+			}
+			.game-menu.hidden {
+				display: none;
+			}
+			.game-menu-content {
+				background: rgba(30, 30, 35, 0.95);
+				padding: 40px 60px;
+				border-radius: 20px;
+				text-align: center;
+				border: 3px solid rgba(255, 137, 8, 0.5);
+				box-shadow: 0 0 40px rgba(255, 137, 8, 0.2);
+			}
+			.game-menu-title {
+				color: #ff8908;
+				font-size: 48px;
+				margin: 0 0 30px 0;
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+			}
+			.game-menu-section {
+				margin-bottom: 25px;
+			}
+			.game-menu-label {
+				display: block;
+				color: white;
+				font-size: 18px;
+				margin-bottom: 12px;
+			}
+			.game-menu-name-input {
+				background: rgba(255, 255, 255, 0.9);
+				border: none;
+				padding: 12px 20px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 18px;
+				font-weight: bold;
+				border-radius: 10px;
+				width: 200px;
+				text-align: center;
+				outline: none;
+				transition: box-shadow 0.2s;
+			}
+			.game-menu-name-input:focus {
+				box-shadow: 0 0 0 3px rgba(255, 137, 8, 0.5);
+			}
+			.game-menu-colors {
+				display: flex;
+				gap: 15px;
+				justify-content: center;
+			}
+			.game-menu-color {
+				width: 50px;
+				height: 50px;
+				border: 4px solid transparent;
+				border-radius: 12px;
+				cursor: pointer;
+				transition:
+					transform 0.2s,
+					border-color 0.2s,
+					box-shadow 0.2s;
+			}
+			.game-menu-color:hover {
+				transform: scale(1.1);
+			}
+			.game-menu-color.selected {
+				border-color: white;
+				box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+				transform: scale(1.1);
+			}
+			.game-menu-play {
+				background: linear-gradient(135deg, #ff8908, #ff6600);
+				border: none;
+				color: white;
+				padding: 15px 60px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 24px;
+				font-weight: bold;
+				border-radius: 12px;
+				cursor: pointer;
+				transition:
+					transform 0.2s,
+					box-shadow 0.2s;
+				margin-top: 10px;
+			}
+			.game-menu-play:hover {
+				transform: scale(1.05);
+				box-shadow: 0 5px 20px rgba(255, 137, 8, 0.4);
+			}
+			.game-menu-play:active {
+				transform: scale(0.98);
+			}
 
-        .multiplayer-ui {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            font-family: 'Comic Neue', sans-serif;
-            color: white;
-        }
-        .multiplayer-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .multiplayer-join {
-            display: flex;
-            gap: 5px;
-        }
-        .multiplayer-host-btn,
-        .multiplayer-join-btn,
-        .multiplayer-leave-btn,
-        .multiplayer-copy-btn {
-            background: rgba(255, 137, 8, 0.9);
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            font-family: 'Comic Neue', sans-serif;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .multiplayer-host-btn:hover,
-        .multiplayer-join-btn:hover,
-        .multiplayer-leave-btn:hover,
-        .multiplayer-copy-btn:hover {
-            background: rgba(255, 137, 8, 1);
-            transform: scale(1.05);
-        }
-        .multiplayer-copy-btn {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .multiplayer-leave-btn {
-            background: rgba(200, 50, 50, 0.9);
-            margin-top: 10px;
-        }
-        .multiplayer-leave-btn:hover {
-            background: rgba(200, 50, 50, 1);
-        }
-        .multiplayer-code-input {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            padding: 10px;
-            font-family: 'Comic Neue', sans-serif;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 8px;
-            width: 80px;
-            text-transform: uppercase;
-            text-align: center;
-        }
-        .multiplayer-code-input::placeholder {
-            color: #999;
-            text-transform: none;
-        }
-        .multiplayer-room-info {
-            display: none;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .multiplayer-room-info.active {
-            display: block;
-        }
-        .multiplayer-room-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .multiplayer-room-code {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff8908;
-            letter-spacing: 4px;
-        }
-        .multiplayer-player-count {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        .multiplayer-status {
-            margin-top: 10px;
-            font-size: 12px;
-            text-align: center;
-            min-height: 16px;
-        }
-    </style>
+			.multiplayer-ui {
+				position: fixed;
+				top: 20px;
+				right: 20px;
+				z-index: 1000;
+				font-family: 'Comic Neue', sans-serif;
+				color: white;
+			}
+			.multiplayer-controls {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.multiplayer-join {
+				display: flex;
+				gap: 5px;
+			}
+			.multiplayer-host-btn,
+			.multiplayer-join-btn,
+			.multiplayer-leave-btn,
+			.multiplayer-copy-btn {
+				background: rgba(255, 137, 8, 0.9);
+				border: none;
+				color: white;
+				padding: 10px 20px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 14px;
+				font-weight: bold;
+				border-radius: 8px;
+				cursor: pointer;
+				transition:
+					background 0.2s,
+					transform 0.1s;
+			}
+			.multiplayer-host-btn:hover,
+			.multiplayer-join-btn:hover,
+			.multiplayer-leave-btn:hover,
+			.multiplayer-copy-btn:hover {
+				background: rgba(255, 137, 8, 1);
+				transform: scale(1.05);
+			}
+			.multiplayer-copy-btn {
+				padding: 5px 10px;
+				font-size: 12px;
+			}
+			.multiplayer-leave-btn {
+				background: rgba(200, 50, 50, 0.9);
+				margin-top: 10px;
+			}
+			.multiplayer-leave-btn:hover {
+				background: rgba(200, 50, 50, 1);
+			}
+			.multiplayer-code-input {
+				background: rgba(255, 255, 255, 0.9);
+				border: none;
+				padding: 10px;
+				font-family: 'Comic Neue', sans-serif;
+				font-size: 14px;
+				font-weight: bold;
+				border-radius: 8px;
+				width: 80px;
+				text-transform: uppercase;
+				text-align: center;
+			}
+			.multiplayer-code-input::placeholder {
+				color: #999;
+				text-transform: none;
+			}
+			.multiplayer-room-info {
+				display: none;
+				background: rgba(0, 0, 0, 0.7);
+				padding: 15px;
+				border-radius: 10px;
+				text-align: center;
+			}
+			.multiplayer-room-info.active {
+				display: block;
+			}
+			.multiplayer-room-header {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				margin-bottom: 10px;
+			}
+			.multiplayer-room-code {
+				font-size: 24px;
+				font-weight: bold;
+				color: #ff8908;
+				letter-spacing: 4px;
+			}
+			.multiplayer-player-count {
+				font-size: 14px;
+				opacity: 0.8;
+			}
+			.multiplayer-status {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: center;
+				min-height: 16px;
+			}
+		</style>
 
-    <div class="threejs-journey is-hover-none js-threejs-journey">
-        <div class="message js-message">
-            <div class="boy">
-                <div class="variant is-hi">
-                    <div class="body"></div>
-                    <div class="arm js-boy-arm"></div>
-                </div>
-                <div class="variant is-yay"></div>
-                <div class="variant is-shrugging"></div>
-            </div>
-            <div class="bubble">
-                <div class="text">Hey! You seem to need some help - you're not a very good driver!</div>
-                <div class="tip"></div>
-            </div>
-        </div>
-        <div class="message js-message">
-            <div class="bubble">
-                <div class="text">Would you like to go to driving school and get your license?</div>
-                <div class="tip"></div>
-            </div>
-        </div>
-        <div class="message js-message is-answers">
-            <a href="#" class="answer is-no js-no">
-                <span class="background"></span>
-                <span class="hover"></span>
-                <span class="label">Nah, I'm good</span>
-            </a>
-            <a href="https://www.trafikverket.se/" target="_blank" rel="noopener" class="answer is-yes js-yes">
-                <span class="background"></span>
-                <span class="hover"></span>
-                <span class="label">Yes, get my license!</span>
-            </a>
-        </div>
-        <div class="message js-message">
-            <div class="bubble">
-                <div class="text">Alright then.<br>Have fun and try not to crash!</div>
-                <div class="tip"></div>
-            </div>
-        </div>
-    </div>
+		<div class="threejs-journey is-hover-none js-threejs-journey">
+			<div class="message js-message">
+				<div class="boy">
+					<div class="variant is-hi">
+						<div class="body"></div>
+						<div class="arm js-boy-arm"></div>
+					</div>
+					<div class="variant is-yay"></div>
+					<div class="variant is-shrugging"></div>
+				</div>
+				<div class="bubble">
+					<div class="text">Hey! You seem to need some help - you're not a very good driver!</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+			<div class="message js-message">
+				<div class="bubble">
+					<div class="text">Would you like to go to driving school and get your license?</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+			<div class="message js-message is-answers">
+				<a href="#" class="answer is-no js-no">
+					<span class="background"></span>
+					<span class="hover"></span>
+					<span class="label">Nah, I'm good</span>
+				</a>
+				<a href="https://www.trafikverket.se/" target="_blank" rel="noopener" class="answer is-yes js-yes">
+					<span class="background"></span>
+					<span class="hover"></span>
+					<span class="label">Yes, get my license!</span>
+				</a>
+			</div>
+			<div class="message js-message">
+				<div class="bubble">
+					<div class="text">Alright then.<br />Have fun and try not to crash!</div>
+					<div class="tip"></div>
+				</div>
+			</div>
+		</div>
 
-    <script type="module" src="./index.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-3966601-5"></script>
-    <script>
-        window.dataLayer = window.dataLayer || []
-        function gtag(){dataLayer.push(arguments)}
-        gtag('js', new Date())
-        gtag('config', 'UA-3966601-5')
-    </script>
-
-</body>
+		<script type="module" src="./index.js"></script>
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-3966601-5"></script>
+		<script>
+			window.dataLayer = window.dataLayer || []
+			function gtag() {
+				dataLayer.push(arguments)
+			}
+			gtag('js', new Date())
+			gtag('config', 'UA-3966601-5')
+		</script>
+	</body>
 </html>
