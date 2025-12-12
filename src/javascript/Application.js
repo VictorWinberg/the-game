@@ -8,6 +8,7 @@ import Resources from './Resources.js'
 import Camera from './Camera.js'
 import ThreejsJourney from './ThreejsJourney.js'
 import Chat from './Chat.js'
+import DuncanBot from './DuncanBot.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
@@ -49,6 +50,7 @@ export default class Application {
 		this.setMultiplayerUI()
 		this.setGasTank()
 		this.setGameMenu()
+		this.setDuncanBot()
 	}
 
 	/**
@@ -473,6 +475,12 @@ export default class Application {
 		if (this.world.startingScreen && this.world.startingScreen.area) {
 			this.world.startingScreen.area.trigger('interact')
 		}
+	}
+
+	setDuncanBot() {
+		this.duncanBot = new DuncanBot({
+			chat: this.chat
+		})
 	}
 
 	/**
