@@ -116,13 +116,97 @@ export default class RacetrackSection {
 			addCurve('right', 15 * s, -Math.PI / 2), // Right turn = negative angle change
 
 			// Segment 3: Straight going RIGHT (east)
-			addStraight(65 * s),
+			addStraight(120 * s),
 
 			// Segment 4: Left turn (135 degrees)
-			addCurve('left', 120 * s, (Math.PI * 3) / 4), // Left turn = positive angle change
+			addCurve('left', 80 * s, (Math.PI * 3) / 4), // Left turn = positive angle change
 
 			// Segment 5: Right turn (90 degrees)
-			addCurve('right', 30 * s, -Math.PI / 2)
+			addCurve('right', 40 * s, -Math.PI / 2),
+
+			// Segment 6: Straight segment
+			addStraight(100 * s),
+
+			// Segment 7: Right turn (90 degrees)
+			addCurve('right', 30 * s, -((Math.PI * 3) / 4)),
+
+			// Segment 8: Straight segment
+			addStraight(60 * s),
+
+			// Segment 9: Left turn (180 degrees)
+			addCurve('left', 20 * s, Math.PI),
+
+			// Segment 10: Right turn (90 degrees)
+			addCurve('right', 30 * s, -Math.PI / 2),
+
+			// Segment 11: Straight segment
+			addStraight(30 * s),
+
+			// Segment 12: Right turn (60 degrees)
+			addCurve('right', 30 * s, -(Math.PI / 3)),
+
+			// Segment 13: Long right turn (120 degrees)
+			addCurve('right', 160 * s, -((Math.PI * 2) / 3)),
+
+			// Segment 14: Left turn (90 degrees)
+			addCurve('left', 30 * s, Math.PI / 2),
+
+			// Segment 15: Right turn (90 degrees)
+			addCurve('right', 30 * s, -Math.PI / 2),
+
+			// Segment 16: Right turn (90 degrees)
+			addCurve('right', 30 * s, -Math.PI / 2),
+
+			// Segment 17: Left turn (90 degrees)
+			addCurve('left', 30 * s, Math.PI / 2),
+
+			// Segment 18: Straight segment
+			addStraight(63 * s),
+
+			// Segment 19: Left turn (90 degrees)
+			addCurve('left', 30 * s, Math.PI / 2),
+
+			// Segment 20: Straight segment
+			addStraight(60 * s),
+
+			// Segment 21: Left turn (45 degrees)
+			addCurve('left', 30 * s, Math.PI / 4),
+
+			// Segment 22: Straight segment
+			addStraight(30 * s),
+
+			// Segment 23: Right turn (45 degrees)
+			addCurve('right', 30 * s, -Math.PI / 4),
+
+			// Segment 24: Straight segment
+			addStraight(30 * s),
+
+			// Segment 25: Right turn (90 degrees)
+			addCurve('right', 20 * s, -Math.PI / 2),
+
+			// Segment 26: Left turn (135 degrees)
+			addCurve('left', 20 * s, (Math.PI * 3) / 4),
+
+			// Segment 27: Left long turn (45 degrees)
+			addCurve('left', 120 * s, Math.PI / 4),
+
+			// Segment 28: Right turn (180 degrees)
+			addCurve('right', 30 * s, -Math.PI),
+
+			// Segment 29: Straight segment
+			addStraight(80 * s),
+
+			// Segment 30: Right turn (90 degrees)
+			addCurve('right', 30 * s, -Math.PI / 2),
+
+			// Segment 30: Left turn (45 degrees)
+			addCurve('left', 30 * s, Math.PI / 4),
+
+			// Segment 31: Long right turn (45 degrees)
+			addCurve('right', 200 * s, -Math.PI / 4),
+
+			// Segment 32: Straight segment
+			addStraight(88 * s)
 		]
 	}
 
