@@ -415,3 +415,90 @@ html {
 .chat-send:active {
 	background: rgba(255, 255, 255, 0.4);
 }
+
+.news-feed {
+	position: fixed;
+	top: 80px;
+	/* Below multiplayer UI */
+	right: 20px;
+	width: 300px;
+	background: rgba(0, 0, 0, 0.75);
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-radius: 8px;
+	overflow: hidden;
+	z-index: 100;
+	font-family: 'Comic Neue', cursive;
+	pointer-events: none;
+	/* Let clicks pass through if needed, but maybe we want to select text? Let's keep it interactive for now, or none if it blocks game */
+}
+
+.news-feed-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 12px;
+	background: rgba(200, 0, 0, 0.8);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.news-feed-title {
+	color: white;
+	font-weight: 700;
+	font-size: 14px;
+	letter-spacing: 1px;
+}
+
+.news-feed-live {
+	background: white;
+	color: red;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: 900;
+	animation: blink 2s infinite;
+}
+
+@keyframes blink {
+	0% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.5;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+.news-feed-content {
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.news-feed-item {
+	color: white;
+	font-size: 12px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	padding-bottom: 4px;
+	animation: slideIn 0.5s ease-out;
+}
+
+.news-feed-item:last-child {
+	border-bottom: none;
+}
+
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}

@@ -12,6 +12,7 @@ import DuncanBot from './DuncanBot.js'
 import ClaudeBot from './ClaudeBot.js'
 import GogginsBot from './GogginsBot.js'
 import JonteBot from './JonteBot.js'
+import NewsFeed from './NewsFeed.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
@@ -50,6 +51,7 @@ export default class Application {
 		this.setTitle()
 		this.setThreejsJourney()
 		this.setChat()
+		this.setNewsFeed()
 		this.setMultiplayerUI()
 		this.setGasTank()
 		this.setGameMenu()
@@ -300,6 +302,10 @@ export default class Application {
 			world: this.world
 		})
 		this.world.chat = this.chat
+	}
+
+	setNewsFeed() {
+		this.newsFeed = new NewsFeed()
 	}
 
 	setMultiplayerUI() {
