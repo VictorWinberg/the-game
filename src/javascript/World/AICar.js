@@ -113,11 +113,19 @@ export default class AICar {
 		this.ai.lastVelocity = new CANNON.Vec3()
 		this.ai.collisionDetected = false
 		this.ai.collisionCooldown = 0
+		this.ai.collisionImpactThreshold = 2
+		this.ai.stuckStartTime = 0
 
 		this.physicsBody.chassis.body.addEventListener('collide', (event) => {
+			// Ignore collisions with static bodies (floor/walls). Otherwise chassis-to-floor
+			// contacts can continuously refresh the cooldown and "freeze" the AI in stopping.
+			if (!event.body || event.body.mass === 0) {
+				return
+			}
+
 			const contact = event.contact
 			const impactVel = contact.getImpactVelocityAlongNormal()
-			if (impactVel < -2) {
+			if (Math.abs(impactVel) > this.ai.collisionImpactThreshold) {
 				this.ai.collisionDetected = true
 				this.ai.collisionCooldown = this.time.elapsed + 500
 			}
@@ -126,11 +134,14 @@ export default class AICar {
 		this.time.on('tick', () => {
 			const currentPos = this.physicsBody.chassis.body.position
 			const currentVelocity = this.physicsBody.chassis.body.velocity
-			const speed = Math.hypot(currentVelocity.x, currentVelocity.y)
+			const positionDelta = currentPos.vsub(this.ai.oldPosition)
+			const speed = positionDelta.length() / this.time.delta
 			const distanceFromSpawn = Math.hypot(currentPos.x - this.spawnPosition.x, currentPos.y - this.spawnPosition.y)
 
 			const localForward = new CANNON.Vec3(1, 0, 0)
 			this.physicsBody.chassis.body.vectorToWorldFrame(localForward, this.ai.worldForward)
+			const forwardSpeed = this.ai.worldForward.dot(positionDelta)
+			const goingForward = forwardSpeed > 0
 			const carAngle = Math.atan2(this.ai.worldForward.y, this.ai.worldForward.x)
 
 			const steerStrength = this.time.delta * this.physics.car.options.controlsSteeringSpeed
@@ -150,20 +161,41 @@ export default class AICar {
 				const newY = this.spawnPosition.y + Math.sin(angleToSpawn) * safeDistance
 				this.physicsBody.chassis.body.position.set(newX, newY, currentPos.z)
 				this.physicsBody.chassis.body.velocity.set(0, 0, 0)
+				this.physicsBody.chassis.body.angularVelocity.set(0, 0, 0)
+				this.physicsBody.chassis.body.wakeUp()
+				this.ai.oldPosition.copy(this.physicsBody.chassis.body.position)
+				this.ai.stuckStartTime = 0
 				this.ai.state = 'driving'
 				this.ai.collisionDetected = false
 			}
 
-			const velocityChange = Math.abs(speed - Math.hypot(this.ai.lastVelocity.x, this.ai.lastVelocity.y))
-			if (velocityChange > 4 && speed < 0.5) {
-				this.ai.collisionDetected = true
-				this.ai.collisionCooldown = this.time.elapsed + 500
-			}
 			this.ai.lastVelocity.set(currentVelocity.x, currentVelocity.y, currentVelocity.z)
 
 			if (this.ai.collisionDetected && this.time.elapsed < this.ai.collisionCooldown) {
-				this.ai.state = 'stopping'
-				this.ai.stopEndTime = this.time.elapsed + 200
+				// Enter stopping once per collision; don't keep pushing the timers forward.
+				if (this.ai.state === 'driving') {
+					this.ai.state = 'stopping'
+					this.ai.stopEndTime = this.time.elapsed + 200
+				}
+			}
+
+			// If we're trying to drive but not moving for a bit, treat it as "stuck" and recover.
+			// This replaces the old velocityChange heuristic (which was very sensitive to units).
+			if (this.ai.state === 'driving') {
+				const tryingToMove = this.actions.up && !this.actions.brake
+				const stuck = tryingToMove && speed < 0.00015
+
+				if (stuck) {
+					if (this.ai.stuckStartTime === 0) {
+						this.ai.stuckStartTime = this.time.elapsed
+					} else if (this.time.elapsed - this.ai.stuckStartTime > 600) {
+						this.ai.state = 'stopping'
+						this.ai.stopEndTime = this.time.elapsed + 120
+						this.ai.stuckStartTime = 0
+					}
+				} else {
+					this.ai.stuckStartTime = 0
+				}
 			}
 
 			if (distanceFromSpawn > hardBoundary) {
@@ -300,7 +332,11 @@ export default class AICar {
 			}
 
 			if (this.actions.up) {
-				this.ai.accelerating = accelerateStrength * speedMultiplier
+				if (speed < maxSpeed || !goingForward) {
+					this.ai.accelerating = accelerateStrength * speedMultiplier
+				} else {
+					this.ai.accelerating = 0
+				}
 			} else if (this.actions.down) {
 				this.ai.accelerating = -accelerateStrength * 0.3
 			} else {
