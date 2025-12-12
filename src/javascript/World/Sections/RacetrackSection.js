@@ -21,11 +21,11 @@ export default class RacetrackSection {
 		this.container.matrixAutoUpdate = false
 
 		// Track configuration
-		this.trackWidth = 6 // Half-width of the track (distance from center to fence)
-		this.fenceHeight = 1.5 // Height of the fence
-		this.fenceThickness = 0.3 // Thickness of collision box
+		this.scale = 0.4 // Overall track scale (reduced to make track shorter)
+		this.trackWidth = 6
+		this.fenceHeight = 1.5
+		this.fenceThickness = 0.3 * this.scale // Thickness of collision box
 		this.fenceSegments = 16 // Number of segments for curved fence
-		this.scale = 0.5 // Overall track scale (reduced to make track shorter)
 
 		// Store collision bodies for cleanup
 		this.collisionBodies = []
@@ -45,7 +45,7 @@ export default class RacetrackSection {
 		this.calculateTrackPath()
 		this.setFences()
 		this.setStartFinishLine()
-		this.setPyramids()
+		this.setCones()
 		this.setGrandstands()
 		this.setLapTracking()
 	}
@@ -303,7 +303,7 @@ export default class RacetrackSection {
 		this.container.add(mesh)
 
 		// Collision
-		this.createFenceCollision(centerX, centerY, this.fenceHeight / 2, length, this.fenceThickness, this.fenceHeight, angle)
+		this.createFenceCollision(centerX, centerY, this.fenceHeight / 2, length, this.fenceThickness, this.fenceHeight * 2, angle)
 
 		return mesh
 	}
@@ -351,7 +351,7 @@ export default class RacetrackSection {
 			this.container.add(mesh)
 
 			// Create collision body for curved segment
-			this.createFenceCollision(midX, midY, this.fenceHeight / 2, actualSegmentLength, this.fenceThickness, this.fenceHeight, fenceAngle)
+			this.createFenceCollision(midX, midY, this.fenceHeight / 2, actualSegmentLength, this.fenceThickness, this.fenceHeight * 2, fenceAngle)
 		}
 	}
 
@@ -435,13 +435,14 @@ export default class RacetrackSection {
 	setStartFinishLine() {
 		// Create checkered flag pattern at start/finish line
 		const s = this.scale
-		const checkSize = 1
-		const numChecks = 8
+		const checkSize = 1 * s
+		const numChecks = 16 // Increased from 8 to make marker wider
 		const lineWidth = this.trackWidth * 2
 
 		// Position at the start of segment 1
 		const startX = this.x + 0
 		const startY = this.y + 5 * s
+		this.startFinishLineY = startY // Set for lap tracking
 
 		// Create checkered pattern
 		const checkerGroup = new THREE.Group()
@@ -469,7 +470,7 @@ export default class RacetrackSection {
 		}
 
 		// Add start line stripe across track
-		const stripeGeometry = new THREE.PlaneGeometry(lineWidth, 0.5)
+		const stripeGeometry = new THREE.PlaneGeometry(lineWidth, 0.5 * s)
 		const stripeMaterial = new THREE.MeshBasicMaterial({
 			color: 0xffffff,
 			side: THREE.DoubleSide,
@@ -485,14 +486,14 @@ export default class RacetrackSection {
 
 		// Add direction arrow pointing UP (direction of travel)
 		const arrowShape = new THREE.Shape()
-		arrowShape.moveTo(0, -2)
-		arrowShape.lineTo(1.5, -2)
-		arrowShape.lineTo(1.5, -3)
-		arrowShape.lineTo(3, -1)
-		arrowShape.lineTo(1.5, 1)
-		arrowShape.lineTo(1.5, 0)
+		arrowShape.moveTo(0, -2 * s)
+		arrowShape.lineTo(1.5 * s, -2 * s)
+		arrowShape.lineTo(1.5 * s, -3 * s)
+		arrowShape.lineTo(3 * s, -1 * s)
+		arrowShape.lineTo(1.5 * s, 1 * s)
+		arrowShape.lineTo(1.5 * s, 0)
 		arrowShape.lineTo(0, 0)
-		arrowShape.lineTo(0, -2)
+		arrowShape.lineTo(0, -2 * s)
 
 		const arrowGeometry = new THREE.ShapeGeometry(arrowShape)
 		const arrowMaterial = new THREE.MeshBasicMaterial({
@@ -502,7 +503,7 @@ export default class RacetrackSection {
 			opacity: 0.6
 		})
 		const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial)
-		arrow.position.set(startX - 5, startY + 8 * s, 0.01)
+		arrow.position.set(startX - 5 * s, startY + 8 * s, 0.01)
 		arrow.rotation.x = -Math.PI / 2
 		arrow.rotation.z = -Math.PI / 2 // Flipped to point UP
 		arrow.matrixAutoUpdate = false
@@ -571,12 +572,13 @@ export default class RacetrackSection {
 
 	setGrandstands() {
 		// Grandstand definitions with sizes
+		const s = this.scale
 		const grandstandDefs = {
-			K: { width: 8, depth: 4 },
-			A1: { width: 12, depth: 5 },
-			Z1: { width: 6, depth: 3 },
-			T: { width: 10, depth: 5 },
-			B: { width: 10, depth: 5 }
+			K: { width: 8 * s, depth: 4 * s },
+			A1: { width: 12 * s, depth: 5 * s },
+			Z1: { width: 6 * s, depth: 3 * s },
+			T: { width: 10 * s, depth: 5 * s },
+			B: { width: 10 * s, depth: 5 * s }
 		}
 
 		// Create grandstand material
@@ -592,12 +594,12 @@ export default class RacetrackSection {
 				const def = grandstandDefs[pos.name]
 
 				// Create grandstand structure
-				const geometry = new THREE.BoxGeometry(def.width, def.depth, 2)
+				const geometry = new THREE.BoxGeometry(def.width, def.depth, 2 * s)
 				const mesh = new THREE.Mesh(geometry, grandstandMaterial.clone())
 
 				// Position relative to track, facing the track
 				const rotation = pos.heading + Math.PI / 2 // Face towards track
-				mesh.position.set(this.x + pos.x, this.y + pos.y, 1)
+				mesh.position.set(this.x + pos.x, this.y + pos.y, 1 * s)
 				mesh.rotation.z = rotation
 
 				mesh.matrixAutoUpdate = false
@@ -605,13 +607,14 @@ export default class RacetrackSection {
 				this.container.add(mesh)
 
 				// Add label
-				this.addLabel(pos.name, this.x + pos.x, this.y + pos.y, 2.5)
+				this.addLabel(pos.name, this.x + pos.x, this.y + pos.y, 2.5 * s)
 			}
 		}
 	}
 
 	addLabel(text, x, y, z) {
 		// Create a simple text label using a canvas texture
+		const s = this.scale
 		const canvas = document.createElement('canvas')
 		canvas.width = 128
 		canvas.height = 64
@@ -629,7 +632,7 @@ export default class RacetrackSection {
 		const texture = new THREE.CanvasTexture(canvas)
 		texture.needsUpdate = true
 
-		const geometry = new THREE.PlaneGeometry(4, 2)
+		const geometry = new THREE.PlaneGeometry(4 * s, 2 * s)
 		const material = new THREE.MeshBasicMaterial({
 			map: texture,
 			transparent: true,
@@ -648,6 +651,7 @@ export default class RacetrackSection {
 
 	addTextLabel(text, x, y, z) {
 		// Create a text label using a canvas texture
+		const s = this.scale
 		const canvas = document.createElement('canvas')
 		canvas.width = 512
 		canvas.height = 128
@@ -665,7 +669,7 @@ export default class RacetrackSection {
 		const texture = new THREE.CanvasTexture(canvas)
 		texture.needsUpdate = true
 
-		const geometry = new THREE.PlaneGeometry(12, 3)
+		const geometry = new THREE.PlaneGeometry(12 * s, 3 * s)
 		const material = new THREE.MeshBasicMaterial({
 			map: texture,
 			transparent: true,
@@ -682,121 +686,122 @@ export default class RacetrackSection {
 		this.container.add(mesh)
 	}
 
-	setPyramids() {
-		// Add pyramids randomly along the track
+	setCones() {
+		// Add cones randomly along the track
 		const s = this.scale
-		const pyramidProbability = 0.15 // 15% chance per segment
-		const minDistanceBetweenPyramids = 20 * s // Minimum distance between pyramids
+		const coneProbability = 0.4 // 40% chance per segment (increased from 15%)
+		const minDistanceBetweenCones = 10 * s // Minimum distance between cones (reduced from 20)
 
-		// Store last pyramid position to maintain minimum distance
-		let lastPyramidX = null
-		let lastPyramidY = null
+		// Store last cone position to maintain minimum distance
+		let lastConeX = null
+		let lastConeY = null
 
 		// Iterate through track segments
 		for (const segment of this.trackSegments) {
-			// Random chance to place a pyramid on this segment
-			if (Math.random() > pyramidProbability) {
+			// Random chance to place a cone on this segment
+			if (Math.random() > coneProbability) {
 				continue
 			}
 
-			let pyramidX, pyramidY, pyramidRotation
+			let coneX, coneY, coneRotation
 
 			if (segment.type === 'straight') {
 				// Calculate random position along straight segment
 				const t = Math.random() // 0 to 1 along the segment
-				pyramidX = this.x + segment.start.x + (segment.end.x - segment.start.x) * t
-				pyramidY = this.y + segment.start.y + (segment.end.y - segment.start.y) * t
+				coneX = this.x + segment.start.x + (segment.end.x - segment.start.x) * t
+				coneY = this.y + segment.start.y + (segment.end.y - segment.start.y) * t
 
 				// Calculate rotation to align with track direction
 				const dx = segment.end.x - segment.start.x
 				const dy = segment.end.y - segment.start.y
-				pyramidRotation = Math.atan2(dy, dx)
+				coneRotation = Math.atan2(dy, dx)
 			} else if (segment.type === 'curve') {
 				// Calculate random position along curve
 				const t = Math.random() // 0 to 1 along the curve
 				const angle = segment.startAngle + (segment.endAngle - segment.startAngle) * t
-				pyramidX = this.x + segment.center.x + segment.radius * Math.cos(angle)
-				pyramidY = this.y + segment.center.y + segment.radius * Math.sin(angle)
+				coneX = this.x + segment.center.x + segment.radius * Math.cos(angle)
+				coneY = this.y + segment.center.y + segment.radius * Math.sin(angle)
 
 				// Rotation tangent to the curve
-				pyramidRotation = angle + Math.PI / 2
+				coneRotation = angle + Math.PI / 2
 			} else {
 				continue
 			}
 
-			// Check minimum distance from last pyramid
-			if (lastPyramidX !== null && lastPyramidY !== null) {
-				const distance = Math.sqrt((pyramidX - lastPyramidX) ** 2 + (pyramidY - lastPyramidY) ** 2)
-				if (distance < minDistanceBetweenPyramids) {
-					continue // Skip this pyramid, too close to previous one
+			// Check minimum distance from last cone
+			if (lastConeX !== null && lastConeY !== null) {
+				const distance = Math.sqrt((coneX - lastConeX) ** 2 + (coneY - lastConeY) ** 2)
+				if (distance < minDistanceBetweenCones) {
+					continue // Skip this cone, too close to previous one
 				}
 			}
 
 			// Add small random offset perpendicular to track to vary placement
-			const perpAngle = pyramidRotation + Math.PI / 2
+			const perpAngle = coneRotation + Math.PI / 2
 			const offsetAmount = (Math.random() - 0.5) * (this.trackWidth * 0.3) // Small offset within track
-			pyramidX += Math.cos(perpAngle) * offsetAmount
-			pyramidY += Math.sin(perpAngle) * offsetAmount
+			coneX += Math.cos(perpAngle) * offsetAmount
+			coneY += Math.sin(perpAngle) * offsetAmount
 
 			// Add random rotation variation
 			const rotationVariation = (Math.random() - 0.5) * 0.3 // ±0.15 radians
-			pyramidRotation += rotationVariation
+			coneRotation += rotationVariation
 
-			// Create pyramid using cone model (or create pyramid geometry)
+			// Create cone using cone model (or create cone geometry)
 			// Check if cone resources are available
 			if (this.resources.items.coneBase && this.resources.items.coneCollision) {
 				this.objects.add({
 					base: this.resources.items.coneBase.scene,
 					collision: this.resources.items.coneCollision.scene,
-					offset: new THREE.Vector3(pyramidX, pyramidY, 0),
-					rotation: new THREE.Euler(0, 0, pyramidRotation),
+					offset: new THREE.Vector3(coneX, coneY, 0),
+					rotation: new THREE.Euler(0, 0, coneRotation),
 					duplicated: true,
-					shadow: { sizeX: 1.5, sizeY: 1.5, offsetZ: -0.3, alpha: 0.4 },
+					shadow: { sizeX: 1.5 * s, sizeY: 1.5 * s, offsetZ: -0.3 * s, alpha: 0.4 },
 					mass: 0.5, // Make them movable/knockable
 					soundName: 'woodHit',
 					isCone: true
 				})
 			} else {
-				// Fallback: create pyramid geometry if cone model not available
-				this.createPyramidGeometry(pyramidX, pyramidY, pyramidRotation)
+				// Fallback: create cone geometry if cone model not available
+				this.createConeGeometry(coneX, coneY, coneRotation)
 			}
 
-			// Update last pyramid position
-			lastPyramidX = pyramidX
-			lastPyramidY = pyramidY
+			// Update last cone position
+			lastConeX = coneX
+			lastConeY = coneY
 		}
 	}
 
-	createPyramidGeometry(x, y, rotation) {
-		// Create a simple pyramid using THREE.js geometry
-		const pyramidSize = 1.5
-		const pyramidHeight = 2
+	createConeGeometry(x, y, rotation) {
+		// Create a simple cone using THREE.js geometry
+		const s = this.scale
+		const coneSize = 1.5 * s
+		const coneHeight = 2 * s
 
-		// Create pyramid shape (4-sided pyramid)
-		const geometry = new THREE.ConeGeometry(pyramidSize, pyramidHeight, 4)
+		// Create cone shape (4-sided cone)
+		const geometry = new THREE.ConeGeometry(coneSize, coneHeight, 4)
 		const material = new THREE.MeshStandardMaterial({
 			color: 0xffaa00, // Orange color
 			roughness: 0.7,
 			metalness: 0.3
 		})
 
-		const pyramid = new THREE.Mesh(geometry, material)
-		pyramid.position.set(x, y, pyramidHeight / 2)
-		pyramid.rotation.z = rotation
+		const cone = new THREE.Mesh(geometry, material)
+		cone.position.set(x, y, coneHeight / 2)
+		cone.rotation.z = rotation
 
-		pyramid.matrixAutoUpdate = false
-		pyramid.updateMatrix()
-		this.container.add(pyramid)
+		cone.matrixAutoUpdate = false
+		cone.updateMatrix()
+		this.container.add(cone)
 
 		// Add simple collision (box approximation)
-		const halfExtents = new CANNON.Vec3(pyramidSize * 0.7, pyramidSize * 0.7, pyramidHeight / 2)
+		const halfExtents = new CANNON.Vec3(coneSize * 0.7, coneSize * 0.7, coneHeight / 2)
 		const shape = new CANNON.Box(halfExtents)
 		const body = new CANNON.Body({
 			mass: 0.5,
 			material: this.objects.physics.materials.items.dummy
 		})
 		body.addShape(shape)
-		body.position.set(x, y, pyramidHeight / 2)
+		body.position.set(x, y, coneHeight / 2)
 
 		// Set rotation
 		const quaternion = new CANNON.Quaternion()
