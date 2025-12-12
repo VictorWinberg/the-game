@@ -8,6 +8,7 @@ import Resources from './Resources.js'
 import Camera from './Camera.js'
 import ThreejsJourney from './ThreejsJourney.js'
 import Chat from './Chat.js'
+import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -40,6 +41,7 @@ export default class Application {
 		this.setThreejsJourney()
 		this.setChat()
 		this.setMultiplayerUI()
+		this.setGasTank()
 	}
 
 	/**
@@ -407,6 +409,10 @@ export default class Application {
 		if (this.multiplayerUI.status) {
 			this.multiplayerUI.status.textContent = message
 		}
+	}
+
+	setGasTank() {
+		this.gasTank = new GasTank()
 	}
 
 	/**

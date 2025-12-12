@@ -1,3 +1,5 @@
+@import './gas-tank.css';
+
 * {
 	padding: 0;
 	margin: 0;
@@ -140,9 +142,11 @@ html {
 	0% {
 		transform: rotate(0deg);
 	}
+
 	2.5% {
 		transform: rotate(15deg);
 	}
+
 	7.5% {
 		transform: rotate(-15deg);
 	}
@@ -150,9 +154,11 @@ html {
 	12.5% {
 		transform: rotate(15deg);
 	}
+
 	17.5% {
 		transform: rotate(-15deg);
 	}
+
 	20% {
 		transform: rotate(0deg);
 	}
