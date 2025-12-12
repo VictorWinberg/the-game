@@ -9,6 +9,7 @@ export default class Physics {
 		this.sizes = _options.sizes
 		this.controls = _options.controls
 		this.sounds = _options.sounds
+		this.scene = _options.scene
 
 		// Set up
 		if (this.debug) {
@@ -24,6 +25,7 @@ export default class Physics {
 
 		this.time.on('tick', () => {
 			this.world.step(this.time.delta / 1000)
+			this.updateExplosionEffects()
 		})
 	}
 
@@ -542,6 +544,9 @@ export default class Physics {
 		this.coneExplosionCooldown.duration = 200 // milliseconds
 		this.coneExplosionCooldown.lastConeBody = null
 
+		// Visual explosion effects container
+		this.explosionEffects = []
+
 		// Debug
 		if (this.debug) {
 			this.car.debugFolder = this.debugFolder.addFolder('car')
@@ -762,7 +767,7 @@ export default class Physics {
 		aiCar.chassis.body.allowSleep = false
 		aiCar.chassis.body.position.set(position.x, position.y, position.z)
 		aiCar.chassis.body.addShape(aiCar.chassis.shape, options.chassisOffset)
-		aiCar.chassis.body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), -Math.PI * 0.5)
+		aiCar.chassis.body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI * 0.5)
 
 		aiCar.vehicle = new CANNON.RaycastVehicle({
 			chassisBody: aiCar.chassis.body
@@ -857,10 +862,10 @@ export default class Physics {
 		// Get cone position
 		const conePos = coneBody.position
 
-		// Explosion parameters
-		const explosionRadius = 6
-		const explosionStrength = 30
-		const carExplosionStrength = 50 // Stronger force for the car
+		// MUCH MORE AGGRESSIVE Explosion parameters
+		const explosionRadius = 12 // Increased from 6
+		const explosionStrength = 120 // Increased from 30 (4x)
+		const carExplosionStrength = 200 // Increased from 50 (4x)
 
 		// Get car position
 		const carPos = this.car.chassis.body.position
@@ -877,20 +882,16 @@ export default class Physics {
 		// Normalize direction
 		direction.normalize()
 
-		// Apply strong impulse to car (away from cone)
+		// Apply VERY strong impulse to car (away from cone)
 		const carImpulse = new CANNON.Vec3(
 			direction.x * carExplosionStrength,
 			direction.y * carExplosionStrength,
-			(direction.z + 0.8) * carExplosionStrength // Add upward boost
+			(direction.z + 1.2) * carExplosionStrength // More upward boost
 		)
 		this.car.chassis.body.applyImpulse(carImpulse, carPos)
 
-		// Add angular velocity for spinning effect
-		this.car.chassis.body.angularVelocity.set(
-			(Math.random() - 0.5) * 15,
-			(Math.random() - 0.5) * 15,
-			(Math.random() - 0.5) * 15
-		)
+		// Add much more angular velocity for dramatic spinning effect
+		this.car.chassis.body.angularVelocity.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30)
 
 		// Apply explosion to nearby objects
 		for (const body of this.world.bodies) {
@@ -919,21 +920,130 @@ export default class Physics {
 				const impulse = new CANNON.Vec3(
 					bodyDirection.x * impulseStrength,
 					bodyDirection.y * impulseStrength,
-					(bodyDirection.z + 0.5) * impulseStrength
+					(bodyDirection.z + 0.8) * impulseStrength // More upward force
 				)
 
 				body.applyImpulse(impulse, body.position)
 
-				// Add some random angular velocity for tumbling effect
-				body.angularVelocity.set(
-					(Math.random() - 0.5) * 10,
-					(Math.random() - 0.5) * 10,
-					(Math.random() - 0.5) * 10
-				)
+				// Add more random angular velocity for dramatic tumbling effect
+				body.angularVelocity.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20)
 			}
 		}
 
-		// Play explosion sound
+		// Create visual explosion effect
+		this.createExplosionEffect(conePos)
+
+		// Play explosion sound (louder/more dramatic)
 		this.sounds.play('brick')
+	}
+
+	createExplosionEffect(position) {
+		// Create multiple layers for a more dramatic explosion
+
+		// Inner bright core
+		const coreGeometry = new THREE.SphereGeometry(0.3, 16, 16)
+		const coreMaterial = new THREE.MeshBasicMaterial({
+			color: 0xffffff, // Bright white core
+			transparent: true,
+			opacity: 1,
+			blending: THREE.AdditiveBlending
+		})
+		const core = new THREE.Mesh(coreGeometry, coreMaterial)
+		core.position.set(position.x, position.y, position.z)
+
+		// Outer orange/red explosion
+		const outerGeometry = new THREE.SphereGeometry(0.5, 16, 16)
+		const outerMaterial = new THREE.MeshBasicMaterial({
+			color: 0xff4400, // Bright orange/red
+			transparent: true,
+			opacity: 1,
+			blending: THREE.AdditiveBlending
+		})
+		const outer = new THREE.Mesh(outerGeometry, outerMaterial)
+		outer.position.set(position.x, position.y, position.z)
+
+		// Yellow fire ring
+		const ringGeometry = new THREE.SphereGeometry(0.4, 16, 16)
+		const ringMaterial = new THREE.MeshBasicMaterial({
+			color: 0xffaa00, // Yellow/orange
+			transparent: true,
+			opacity: 0.8,
+			blending: THREE.AdditiveBlending
+		})
+		const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+		ring.position.set(position.x, position.y, position.z)
+
+		// Add to scene
+		if (this.scene) {
+			this.scene.add(core)
+			this.scene.add(outer)
+			this.scene.add(ring)
+		}
+
+		// Animation properties for core
+		const coreData = {
+			mesh: core,
+			startTime: this.time.elapsed,
+			duration: 300,
+			startScale: 0.3,
+			endScale: 6,
+			startOpacity: 1.5,
+			endOpacity: 0
+		}
+
+		// Animation properties for outer
+		const outerData = {
+			mesh: outer,
+			startTime: this.time.elapsed,
+			duration: 500,
+			startScale: 0.5,
+			endScale: 10,
+			startOpacity: 1,
+			endOpacity: 0
+		}
+
+		// Animation properties for ring
+		const ringData = {
+			mesh: ring,
+			startTime: this.time.elapsed,
+			duration: 400,
+			startScale: 0.4,
+			endScale: 8,
+			startOpacity: 0.8,
+			endOpacity: 0
+		}
+
+		this.explosionEffects.push(coreData, outerData, ringData)
+	}
+
+	updateExplosionEffects() {
+		// Update all active explosion effects
+		for (let i = this.explosionEffects.length - 1; i >= 0; i--) {
+			const effect = this.explosionEffects[i]
+			const elapsed = this.time.elapsed - effect.startTime
+			const progress = Math.min(elapsed / effect.duration, 1)
+
+			if (progress >= 1) {
+				// Remove finished explosion
+				if (this.scene && effect.mesh) {
+					this.scene.remove(effect.mesh)
+					effect.mesh.geometry.dispose()
+					effect.mesh.material.dispose()
+				}
+				this.explosionEffects.splice(i, 1)
+				continue
+			}
+
+			// Animate scale and opacity
+			const scale = effect.startScale + (effect.endScale - effect.startScale) * progress
+			const opacity = effect.startOpacity + (effect.endOpacity - effect.startOpacity) * progress
+
+			effect.mesh.scale.set(scale, scale, scale)
+			effect.mesh.material.opacity = opacity
+
+			// Add pulsing effect
+			const pulse = Math.sin(progress * Math.PI * 4) * 0.3 + 1
+			effect.mesh.material.opacity *= pulse
+		}
 	}
 }
