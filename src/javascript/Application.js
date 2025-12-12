@@ -10,6 +10,7 @@ import ThreejsJourney from './ThreejsJourney.js'
 import Chat from './Chat.js'
 import DuncanBot from './DuncanBot.js'
 import ClaudeBot from './ClaudeBot.js'
+import GogginsBot from './GogginsBot.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
 
@@ -53,6 +54,7 @@ export default class Application {
 		this.setGameMenu()
 		this.setDuncanBot()
 		this.setClaudeBot()
+		this.setGogginsBot()
 	}
 
 	/**
@@ -487,6 +489,12 @@ export default class Application {
 
 	setClaudeBot() {
 		this.claudeBot = new ClaudeBot({
+			chat: this.chat
+		})
+	}
+
+	setGogginsBot() {
+		this.gogginsBot = new GogginsBot({
 			chat: this.chat
 		})
 	}
