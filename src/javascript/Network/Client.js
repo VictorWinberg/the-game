@@ -60,6 +60,11 @@ export default class NetworkClient extends EventEmitter {
 				console.log('Player left:', data.id)
 				this.trigger('player-left', [data])
 			})
+
+			// Handle player actions (projectiles, explosions, etc.)
+			this.socket.on('player-action', (action) => {
+				this.trigger('player-action', [action])
+			})
 		})
 	}
 
@@ -103,6 +108,11 @@ export default class NetworkClient extends EventEmitter {
 
 		this.lastSendTime = now
 		this.socket.emit('player-state', state)
+	}
+
+	sendAction(action) {
+		if (!this.connected || !this.roomCode) return
+		this.socket.emit('player-action', action)
 	}
 
 	getRoomInfo() {

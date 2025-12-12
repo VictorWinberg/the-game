@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import CANNON from 'cannon'
 import Materials from './Materials.js'
 import Floor from './Floor.js'
 import Shadows from './Shadows.js'
@@ -365,7 +366,8 @@ export default class World {
 			renderer: this.renderer,
 			camera: this.camera,
 			debug: this.debugFolder,
-			config: this.config
+			config: this.config,
+			network: this.network
 		})
 		this.container.add(this.car.container)
 	}
@@ -491,6 +493,10 @@ export default class World {
 			this.updateRemoteCar(state)
 		})
 
+		this.network.on('player-action', (action) => {
+			this.handleRemoteAction(action)
+		})
+
 		this.time.on('tick', () => {
 			if (this.car && this.physics && this.network.connected && this.network.roomCode) {
 				const chassis = this.physics.car.chassis.body
@@ -561,6 +567,82 @@ export default class World {
 	addExistingPlayers(playerIds) {
 		for (const playerId of playerIds) {
 			this.addRemoteCar(playerId)
+		}
+	}
+
+	handleRemoteAction(action) {
+		const remoteCar = this.remoteCars.get(action.id)
+
+		switch (action.type) {
+			case 'projectile-shoot':
+				this.spawnRemoteProjectile(action)
+				break
+			case 'explosion':
+				this.triggerRemoteExplosion(action)
+				break
+			case 'klaxon':
+				// Play horn sound at remote car position
+				if (remoteCar) {
+					this.sounds.play('horn')
+				}
+				break
+		}
+	}
+
+	spawnRemoteProjectile(action) {
+		const projectile = this.objects.add({
+			base: this.resources.items.lemonBase.scene,
+			collision: this.resources.items.lemonCollision.scene,
+			offset: new THREE.Vector3(action.position.x, action.position.y, action.position.z),
+			rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
+			duplicated: true,
+			shadow: { sizeX: 0.2, sizeY: 0.2, offsetZ: -0.05, alpha: 0.25 },
+			mass: 1,
+			soundName: 'brick',
+			sleep: false
+		})
+
+		const scale = 0.4
+		projectile.container.scale.set(scale, scale, scale)
+
+		const impulseStrength = 80
+		const impulse = new CANNON.Vec3(
+			action.direction.x * impulseStrength,
+			action.direction.y * impulseStrength,
+			5
+		)
+		projectile.collision.body.applyImpulse(impulse, projectile.collision.body.position)
+		projectile.collision.body.angularVelocity.set(
+			(Math.random() - 0.5) * 20,
+			(Math.random() - 0.5) * 20,
+			(Math.random() - 0.5) * 20
+		)
+	}
+
+	triggerRemoteExplosion(action) {
+		const explosionRadius = 8
+		const explosionStrength = 20
+		const carPos = new CANNON.Vec3(action.position.x, action.position.y, action.position.z)
+
+		for (const body of this.physics.world.bodies) {
+			if (body.mass === 0) continue
+
+			const distance = carPos.distanceTo(body.position)
+
+			if (distance < explosionRadius && distance > 0) {
+				body.wakeUp()
+
+				let direction = body.position.vsub(carPos)
+				direction.normalize()
+
+				const distanceFactor = 1 - distance / explosionRadius
+				const impulseStrength = explosionStrength * distanceFactor * body.mass
+
+				const impulse = direction.scale(impulseStrength)
+				impulse.z += impulseStrength * 0.5
+
+				body.applyImpulse(impulse, body.position)
+			}
 		}
 	}
 }

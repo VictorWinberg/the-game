@@ -17,6 +17,7 @@ export default class Car {
 		this.camera = _options.camera
 		this.debug = _options.debug
 		this.config = _options.config
+		this.network = _options.network
 
 		// Set up
 		this.container = new THREE.Object3D()
@@ -326,6 +327,11 @@ export default class Car {
 				}
 
 				this.sounds.play(Math.random() < 0.002 ? 'carHorn2' : 'carHorn1')
+
+				// Send action to network
+				if (this.network) {
+					this.network.sendAction({ type: 'klaxon' })
+				}
 			}
 
 			// Rain horns
@@ -403,6 +409,15 @@ export default class Car {
 
 				// Add some spin for visual effect
 				projectile.collision.body.angularVelocity.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20)
+
+				// Send action to network
+				if (this.network) {
+					this.network.sendAction({
+						type: 'projectile-shoot',
+						position: { x, y, z },
+						direction: { x: forwardX, y: forwardY }
+					})
+				}
 			}
 		})
 	}
@@ -465,6 +480,14 @@ export default class Car {
 
 				// Play a sound effect (using existing sound)
 				this.sounds.play('brick')
+
+				// Send action to network
+				if (this.network) {
+					this.network.sendAction({
+						type: 'explosion',
+						position: { x: this.position.x, y: this.position.y, z: this.position.z }
+					})
+				}
 			}
 		})
 	}

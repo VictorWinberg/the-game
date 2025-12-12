@@ -146,6 +146,14 @@ io.on('connection', (socket) => {
 		})
 	})
 
+	socket.on('player-action', (action) => {
+		if (!currentRoom) return
+		socket.to(currentRoom).emit('player-action', {
+			id: socket.id,
+			...action
+		})
+	})
+
 	socket.on('disconnect', () => {
 		console.log(`Player disconnected: ${socket.id}`)
 
