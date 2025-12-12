@@ -10,8 +10,6 @@ export default class NewsFeed {
 			"ALGORITHM UPDATE WIPES OUT ENTIRE TOWN'S DIGITAL EXISTENCE",
 			"NAP CONSISTENCY SAVES MARRIAGE",
 			"GOOGLE MAPS CAR CHASED BY ANGRY BUSINESS OWNERS",
-			"MAYOR DECLARES 'CONTENT IS KING', ABDICATES THRONE",
-			"LOCAL GHOST COMPLAINS ABOUT INVISIBLE CITATIONS",
 			"WOMAN MARRIES GOOGLE MY BUSINESS LISTING",
 			"LOCAL SEO AUDIT REVEALS TOWN IS ACTUALLY A SIMULATION",
 			"COMPETITOR SABOTAGE: MAN BUYS 1000 FAKE REVIEWS FOR ENEMY",
@@ -19,6 +17,7 @@ export default class NewsFeed {
 		]
 
 		if (this.$container) {
+			this.availableHeadlines = [...this.headlines]
 			this.start()
 		}
 	}
@@ -30,12 +29,22 @@ export default class NewsFeed {
 		}, this.headlineDuration)
 	}
 
-	getRandomHeadline() {
-		return this.headlines[Math.floor(Math.random() * this.headlines.length)]
+	getUniqueHeadline() {
+		if (this.availableHeadlines.length === 0) {
+			this.availableHeadlines = [...this.headlines]
+		}
+		
+		const randomIndex = Math.floor(Math.random() * this.availableHeadlines.length)
+		const headline = this.availableHeadlines[randomIndex]
+		
+		// Remove the selected headline from available list
+		this.availableHeadlines.splice(randomIndex, 1)
+		
+		return headline
 	}
 
 	addHeadline() {
-		const headline = this.getRandomHeadline()
+		const headline = this.getUniqueHeadline()
 		const $item = document.createElement('div')
 		$item.classList.add('news-feed-item')
 		$item.textContent = headline
