@@ -391,9 +391,15 @@ export default class World {
 	setPlayerData(data) {
 		this.playerData = data
 
-		// Update car username label if car already exists
-		if (this.car && data.username) {
-			this.car.setUsername(data.username)
+		// Update car if it already exists
+		if (this.car) {
+			if (data.username) {
+				this.car.setUsername(data.username)
+			}
+			if (data.color) {
+				this.car.color = data.color
+				this.car.applyColor(data.color)
+			}
 		}
 	}
 
