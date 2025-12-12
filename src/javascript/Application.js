@@ -15,6 +15,7 @@ import JonteBot from './bots/JonteBot.js'
 import NewsFeed from './NewsFeed.js'
 import GasTank from './GasTank.js'
 import NetworkClient from './Network/Client.js'
+import Christmas from './Christmas.js'
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
@@ -59,6 +60,7 @@ export default class Application {
 		this.setClaudeBot()
 		this.setGogginsBot()
 		this.setJonteBot()
+		this.setChristmas()
 	}
 
 	/**
@@ -528,6 +530,10 @@ export default class Application {
 		this.jonteBot = new JonteBot({
 			chat: this.chat
 		})
+	}
+
+	setChristmas() {
+		this.christmas = new Christmas()
 	}
 
 	/**
