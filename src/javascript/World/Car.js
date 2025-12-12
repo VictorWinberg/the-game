@@ -670,6 +670,7 @@ export default class Car {
 				}
 
 				this.sounds.play(Math.random() < 0.002 ? 'carHorn2' : 'carHorn1')
+				this.triggerHonkAnimation()
 
 				// Send action to network
 				if (this.network) {
@@ -696,6 +697,40 @@ export default class Car {
 				})
 			}
 		})
+	}
+
+	triggerHonkAnimation() {
+		const container = document.querySelector('.js-honk-container')
+		if (!container) return
+
+		const honkText = document.createElement('div')
+		honkText.classList.add('honk-text')
+		honkText.textContent = 'HONK!'
+
+		// Random position
+		const x = 10 + Math.random() * 80 // 10% to 90%
+		const y = 10 + Math.random() * 80 // 10% to 90%
+		honkText.style.left = `${x}%`
+		honkText.style.top = `${y}%`
+
+		// Random rotation for extra corniness
+		const rotation = (Math.random() - 0.5) * 60
+		honkText.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`
+
+		// Random colors
+		const colors = ['#ff00ff', '#00ff00', '#ffff00', '#00ffff', '#ff0000']
+		const color = colors[Math.floor(Math.random() * colors.length)]
+		honkText.style.color = color
+		honkText.style.webkitTextStrokeColor = colors[Math.floor(Math.random() * colors.length)]
+
+		container.appendChild(honkText)
+
+		// Remove after animation
+		setTimeout(() => {
+			if (honkText.parentElement) {
+				honkText.parentElement.removeChild(honkText)
+			}
+		}, 1000)
 	}
 
 	setProjectileShoot() {
