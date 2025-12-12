@@ -49,6 +49,7 @@ export default class Car {
 		this.setShootingBall()
 		this.setKlaxon()
 		this.setProjectileShoot()
+		this.setBackwardBowlingBall()
 		this.setExplosion()
 	}
 
@@ -566,6 +567,73 @@ export default class Car {
 						type: 'projectile-shoot',
 						position: { x, y, z },
 						direction: { x: forwardX, y: forwardY }
+					})
+				}
+			}
+		})
+	}
+
+	setBackwardBowlingBall() {
+		this.backwardBall = {}
+		this.backwardBall.lastTime = 0
+		this.backwardBall.cooldown = 500 // milliseconds between shots
+
+		window.addEventListener('keydown', (_event) => {
+			if (_event.code === 'KeyG') {
+				// Check cooldown
+				if (this.time.elapsed - this.backwardBall.lastTime < this.backwardBall.cooldown) {
+					return
+				}
+				this.backwardBall.lastTime = this.time.elapsed
+
+				// Get the car's backward direction from its rotation
+				const carAngle = this.chassis.object.rotation.z
+
+				// Calculate backward direction (opposite of forward)
+				const backwardX = -Math.cos(carAngle)
+				const backwardY = -Math.sin(carAngle)
+
+				// Spawn bowling ball behind the car
+				const spawnDistance = 2.5
+				const x = this.position.x + backwardX * spawnDistance
+				const y = this.position.y + backwardY * spawnDistance
+				const z = this.position.z + 0.5
+
+				// Create the bowling ball
+				const bowlingBall = this.objects.add({
+					base: this.resources.items.bowlingBallBase.scene,
+					collision: this.resources.items.bowlingBallCollision.scene,
+					offset: new THREE.Vector3(x, y, z),
+					rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
+					duplicated: true,
+					shadow: { sizeX: 1.5, sizeY: 1.5, offsetZ: -0.15, alpha: 0.35 },
+					mass: 5,
+					soundName: 'bowlingBall',
+					sleep: false
+				})
+
+				// Apply impulse in the backward direction
+				const impulseStrength = 100
+				const impulse = new CANNON.Vec3(
+					backwardX * impulseStrength,
+					backwardY * impulseStrength,
+					10 // Slight upward arc
+				)
+				bowlingBall.collision.body.applyImpulse(impulse, bowlingBall.collision.body.position)
+
+				// Add some spin
+				bowlingBall.collision.body.angularVelocity.set(
+					(Math.random() - 0.5) * 10,
+					(Math.random() - 0.5) * 10,
+					(Math.random() - 0.5) * 10
+				)
+
+				// Send action to network
+				if (this.network) {
+					this.network.sendAction({
+						type: 'backward-bowling-ball',
+						position: { x, y, z },
+						direction: { x: backwardX, y: backwardY }
 					})
 				}
 			}
