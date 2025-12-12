@@ -42,7 +42,7 @@ function generateRoomCode() {
 	if (rooms.has(code)) {
 		return generateRoomCode()
 	}
-	return code
+	return 'TITS'
 }
 
 const httpServer = createServer((req, res) => {
