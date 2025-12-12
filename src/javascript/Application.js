@@ -211,6 +211,17 @@ export default class Application {
 			this.passes.horizontalBlurPass.enabled = this.passes.horizontalBlurPass.material.uniforms.uStrength.value.x > 0
 			this.passes.verticalBlurPass.enabled = this.passes.verticalBlurPass.material.uniforms.uStrength.value.y > 0
 
+			// FOV Warp Effect
+			if (this.world && this.world.car && this.world.car.controls) {
+				const baseFov = 40
+				const boostFov = 50
+				const targetFov = this.world.car.controls.actions.boost ? boostFov : baseFov
+				
+				// Smoothly interpolate FOV
+				this.camera.instance.fov += (targetFov - this.camera.instance.fov) * 0.05
+				this.camera.instance.updateProjectionMatrix()
+			}
+
 			// Renderer
 			this.passes.composer.render()
 			// this.renderer.domElement.style.background = 'black'
