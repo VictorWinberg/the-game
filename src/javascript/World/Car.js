@@ -28,6 +28,9 @@ export default class Car {
 			this.nowPlaying = Songs[Math.floor(Math.random() * Songs.length)]
 		}
 
+		// Lap tracking
+		this.lapCount = 0
+
 		// Set up
 		this.container = new THREE.Object3D()
 		this.position = new THREE.Vector3()
@@ -144,8 +147,9 @@ export default class Car {
 
 		const canvas = document.createElement('canvas')
 		canvas.width = 512
-		// Increase height if now playing
-		canvas.height = this.nowPlaying ? 200 : 128
+		// Increase height if now playing or showing lap count
+		const hasExtraInfo = this.nowPlaying || this.lapCount > 0
+		canvas.height = hasExtraInfo ? 200 : 128
 
 		const context = canvas.getContext('2d')
 		if (!context) return
@@ -155,9 +159,11 @@ export default class Car {
 		const paddingY = 18
 		const fontSize = 54
 		const songFontSize = 32
+		const lapFontSize = 32
 		const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
 		const songFont = `500 ${songFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
-		
+		const lapFont = `700 ${lapFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+
 		context.font = font
 		context.textBaseline = 'middle'
 		context.textAlign = 'center'
@@ -174,13 +180,28 @@ export default class Car {
 			songText = `🎵 ${this.nowPlaying.title} - ${this.nowPlaying.artist}`
 			const songMetrics = context.measureText(songText)
 			songTextWidth = Math.ceil(songMetrics.width)
-			
+
 			// Use the wider of the two texts
 			textWidth = Math.max(textWidth, songTextWidth)
 		}
 
+		// Calculate lap text width if applicable
+		let lapText = ''
+		let lapTextWidth = 0
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			lapText = `🏁 Lap ${this.lapCount}`
+			const lapMetrics = context.measureText(lapText)
+			lapTextWidth = Math.ceil(lapMetrics.width)
+
+			// Use the wider of all texts
+			textWidth = Math.max(textWidth, lapTextWidth)
+		}
+
 		const boxWidth = Math.min(canvas.width - paddingX * 2, textWidth + paddingX * 2)
-		const boxHeight = this.nowPlaying ? fontSize + songFontSize + paddingY * 3 : fontSize + paddingY * 2
+		let boxHeight = fontSize + paddingY * 2
+		if (this.nowPlaying) boxHeight += songFontSize + paddingY
+		if (this.lapCount > 0) boxHeight += lapFontSize + paddingY
 		const boxX = (canvas.width - boxWidth) * 0.5
 		const boxY = (canvas.height - boxHeight) * 0.5
 		const radius = 26
@@ -222,15 +243,26 @@ export default class Car {
 		// Username Text
 		context.font = font
 		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
-		const nameY = this.nowPlaying ? boxY + paddingY + fontSize * 0.5 : canvas.height * 0.5 + 2
-		context.fillText(text, canvas.width * 0.5, nameY)
+		let currentY = boxY + paddingY + fontSize * 0.5
+		if (!this.nowPlaying && !this.lapCount) {
+			currentY = canvas.height * 0.5 + 2
+		}
+		context.fillText(text, canvas.width * 0.5, currentY)
 
 		// Song Text
 		if (this.nowPlaying) {
 			context.font = songFont
 			context.fillStyle = 'rgba(30, 215, 96, 0.9)' // Spotify green-ish
-			const songY = nameY + fontSize * 0.5 + paddingY * 0.5 + songFontSize * 0.5
-			context.fillText(songText, canvas.width * 0.5, songY)
+			currentY = currentY + fontSize * 0.5 + paddingY * 0.5 + songFontSize * 0.5
+			context.fillText(songText, canvas.width * 0.5, currentY)
+		}
+
+		// Lap Text
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			context.fillStyle = 'rgba(255, 200, 0, 0.95)' // Gold/yellow color
+			currentY = currentY + (this.nowPlaying ? songFontSize * 0.5 : fontSize * 0.5) + paddingY * 0.5 + lapFontSize * 0.5
+			context.fillText(lapText, canvas.width * 0.5, currentY)
 		}
 
 		const texture = new THREE.CanvasTexture(canvas)
@@ -273,6 +305,162 @@ export default class Car {
 
 		// Create new label
 		this.setUsernameLabel()
+	}
+
+	onLapComplete(lapCount) {
+		this.lapCount = lapCount
+		this.updateUsernameLabel()
+		this.updateLapCounterUI()
+	}
+
+	setLapCounterUI() {
+		// Initialize lap counter UI - hide it initially until first lap
+		const lapCounterElement = document.querySelector('.js-lap-counter')
+		if (lapCounterElement) {
+			lapCounterElement.classList.add('hidden')
+		}
+	}
+
+	updateLapCounterUI() {
+		const lapCounterElement = document.querySelector('.js-lap-counter')
+		const lapCounterValue = document.querySelector('.js-lap-counter .lap-counter-value')
+
+		if (lapCounterElement && lapCounterValue) {
+			// Show the lap counter if it's hidden
+			lapCounterElement.classList.remove('hidden')
+
+			// Update the lap count value
+			lapCounterValue.textContent = this.lapCount.toString()
+
+			// Add a brief animation effect when lap count changes
+			lapCounterValue.style.transform = 'scale(1.2)'
+			setTimeout(() => {
+				lapCounterValue.style.transform = 'scale(1)'
+			}, 200)
+		}
+	}
+
+	updateUsernameLabel() {
+		if (!this.usernameLabel || !this.usernameLabel.canvas || !this.usernameLabel.context) return
+
+		const canvas = this.usernameLabel.canvas
+		const context = this.usernameLabel.context
+
+		// Recalculate dimensions
+		const hasExtraInfo = this.nowPlaying || this.lapCount > 0
+		canvas.height = hasExtraInfo ? 200 : 128
+
+		const paddingX = 28
+		const paddingY = 18
+		const fontSize = 54
+		const songFontSize = 32
+		const lapFontSize = 32
+		const font = `700 ${fontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		const songFont = `500 ${songFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+		const lapFont = `700 ${lapFontSize}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif`
+
+		context.font = font
+		context.textBaseline = 'middle'
+		context.textAlign = 'center'
+
+		const text = String(this.username).slice(0, 24)
+		const textMetrics = context.measureText(text)
+		let textWidth = Math.ceil(textMetrics.width)
+
+		let songText = ''
+		let songTextWidth = 0
+		if (this.nowPlaying) {
+			context.font = songFont
+			songText = `🎵 ${this.nowPlaying.title} - ${this.nowPlaying.artist}`
+			const songMetrics = context.measureText(songText)
+			songTextWidth = Math.ceil(songMetrics.width)
+			textWidth = Math.max(textWidth, songTextWidth)
+		}
+
+		let lapText = ''
+		let lapTextWidth = 0
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			lapText = `🏁 Lap ${this.lapCount}`
+			const lapMetrics = context.measureText(lapText)
+			lapTextWidth = Math.ceil(lapMetrics.width)
+			textWidth = Math.max(textWidth, lapTextWidth)
+		}
+
+		const boxWidth = Math.min(canvas.width - paddingX * 2, textWidth + paddingX * 2)
+		let boxHeight = fontSize + paddingY * 2
+		if (this.nowPlaying) boxHeight += songFontSize + paddingY
+		if (this.lapCount > 0) boxHeight += lapFontSize + paddingY
+		const boxX = (canvas.width - boxWidth) * 0.5
+		const boxY = (canvas.height - boxHeight) * 0.5
+		const radius = 26
+
+		context.clearRect(0, 0, canvas.width, canvas.height)
+
+		// Rounded rect helper
+		const roundRect = (_x, _y, _w, _h, _r) => {
+			const r = Math.min(_r, _w * 0.5, _h * 0.5)
+			context.beginPath()
+			context.moveTo(_x + r, _y)
+			context.lineTo(_x + _w - r, _y)
+			context.quadraticCurveTo(_x + _w, _y, _x + _w, _y + r)
+			context.lineTo(_x + _w, _y + _h - r)
+			context.quadraticCurveTo(_x + _w, _y + _h, _x + _w - r, _y + _h)
+			context.lineTo(_x + r, _y + _h)
+			context.quadraticCurveTo(_x, _y + _h, _x, _y + _h - r)
+			context.lineTo(_x, _y + r)
+			context.quadraticCurveTo(_x, _y, _x + r, _y)
+			context.closePath()
+		}
+
+		// Shadow
+		context.fillStyle = 'rgba(0, 0, 0, 0.35)'
+		roundRect(boxX + 3, boxY + 4, boxWidth, boxHeight, radius)
+		context.fill()
+
+		// Fill
+		context.fillStyle = 'rgba(20, 20, 24, 0.85)'
+		roundRect(boxX, boxY, boxWidth, boxHeight, radius)
+		context.fill()
+
+		// Stroke
+		context.strokeStyle = 'rgba(255, 255, 255, 0.18)'
+		context.lineWidth = 4
+		roundRect(boxX, boxY, boxWidth, boxHeight, radius)
+		context.stroke()
+
+		// Username Text
+		context.font = font
+		context.fillStyle = 'rgba(255, 255, 255, 0.95)'
+		let currentY = boxY + paddingY + fontSize * 0.5
+		if (!this.nowPlaying && !this.lapCount) {
+			currentY = canvas.height * 0.5 + 2
+		}
+		context.fillText(text, canvas.width * 0.5, currentY)
+
+		// Song Text
+		if (this.nowPlaying) {
+			context.font = songFont
+			context.fillStyle = 'rgba(30, 215, 96, 0.9)'
+			currentY = currentY + fontSize * 0.5 + paddingY * 0.5 + songFontSize * 0.5
+			context.fillText(songText, canvas.width * 0.5, currentY)
+		}
+
+		// Lap Text
+		if (this.lapCount > 0) {
+			context.font = lapFont
+			context.fillStyle = 'rgba(255, 200, 0, 0.95)'
+			currentY = currentY + (this.nowPlaying ? songFontSize * 0.5 : fontSize * 0.5) + paddingY * 0.5 + lapFontSize * 0.5
+			context.fillText(lapText, canvas.width * 0.5, currentY)
+		}
+
+		// Update texture
+		this.usernameLabel.texture.needsUpdate = true
+
+		// Update sprite scale
+		const worldWidth = 2.6
+		const worldHeight = worldWidth * (canvas.height / canvas.width)
+		this.usernameLabel.sprite.scale.set(worldWidth, worldHeight, 1)
 	}
 
 	setAntena() {
