@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+import CANNON from 'cannon'
+import AreaFenceMaterial from '../../Materials/AreaFence.js'
 
 export default class RacetrackSection {
 	constructor(_options) {
@@ -18,59 +20,141 @@ export default class RacetrackSection {
 		this.container.matrixAutoUpdate = false
 
 		// Fence configuration
-		this.fenceSpacing = 3 // Distance between cones
 		this.trackWidth = 8 // Width of the track (distance from center to fence)
 		this.straightLength = 40 // Length of the straight section
 		this.turnRadius = 20 // Radius of the turn (to center of track)
 		this.turnAngle = Math.PI / 2 // 90 degree turn
+		this.fenceHeight = 1.5 // Height of the fence
+		this.fenceThickness = 0.3 // Thickness of collision box
+		this.fenceSegments = 16 // Number of segments for curved fence
+
+		// Store collision bodies for cleanup
+		this.collisionBodies = []
 
 		this.setFences()
 		this.setTiles()
 	}
 
+	createFenceMaterial() {
+		const material = new AreaFenceMaterial()
+		material.uniforms.uBorderAlpha.value = 0.8
+		material.uniforms.uStrikeAlpha.value = 0.4
+
+		// Update time uniform
+		this.time.on('tick', () => {
+			material.uniforms.uTime.value = this.time.elapsed
+		})
+
+		return material
+	}
+
+	createStraightFence(startX, startY, length) {
+		// Create fence geometry - same as curved fence segments
+		const geometry = new THREE.PlaneGeometry(length, this.fenceHeight)
+
+		// Create material
+		const material = this.createFenceMaterial()
+
+		// Create mesh
+		const mesh = new THREE.Mesh(geometry, material)
+
+		// Position: center of the fence along Y, raised by half the height on Z
+		mesh.position.set(startX, startY - length / 2, this.fenceHeight / 2)
+
+		// Rotate 90° around Z to align the fence along Y axis (same approach as curved fence)
+		mesh.rotation.z = Math.PI / 2
+		mesh.rotation.y = Math.PI / 2
+
+		mesh.matrixAutoUpdate = false
+		mesh.updateMatrix()
+
+		this.container.add(mesh)
+
+		// Create collision body
+		this.createFenceCollision(startX, startY - length / 2, this.fenceHeight / 2, length, this.fenceThickness, this.fenceHeight, 0)
+
+		return mesh
+	}
+
+	createCurvedFence(centerX, centerY, radius, startAngle, endAngle) {
+		const angleSpan = endAngle - startAngle
+		const arcLength = Math.abs(radius * angleSpan)
+		const segmentLength = arcLength / this.fenceSegments
+
+		for (let i = 0; i < this.fenceSegments; i++) {
+			const angle1 = startAngle + (i / this.fenceSegments) * angleSpan
+			const angle2 = startAngle + ((i + 1) / this.fenceSegments) * angleSpan
+			const midAngle = (angle1 + angle2) / 2
+
+			// Calculate segment positions
+			const x1 = centerX + radius * Math.cos(angle1)
+			const y1 = centerY + radius * Math.sin(angle1)
+			const x2 = centerX + radius * Math.cos(angle2)
+			const y2 = centerY + radius * Math.sin(angle2)
+
+			// Calculate segment center and rotation
+			const midX = (x1 + x2) / 2
+			const midY = (y1 + y2) / 2
+			const segmentRotation = midAngle + Math.PI / 2
+
+			// Create fence segment
+			const geometry = new THREE.PlaneGeometry(segmentLength * 1.05, this.fenceHeight)
+			const material = this.createFenceMaterial()
+			const mesh = new THREE.Mesh(geometry, material)
+
+			mesh.position.set(midX, midY, this.fenceHeight / 2)
+			mesh.rotation.z = segmentRotation
+			mesh.rotation.y = segmentRotation
+
+			mesh.matrixAutoUpdate = false
+			mesh.updateMatrix()
+
+			this.container.add(mesh)
+
+			// Create collision body for curved segment
+			this.createFenceCollision(midX, midY, this.fenceHeight / 2, segmentLength * 1.05, this.fenceThickness, this.fenceHeight, segmentRotation)
+		}
+	}
+
+	createFenceCollision(x, y, z, length, thickness, height, rotationZ) {
+		// Create box shape for collision (thickness along local X, length along local Y, height along local Z)
+		const halfExtents = new CANNON.Vec3(thickness / 2, length / 2, height / 2)
+		const shape = new CANNON.Box(halfExtents)
+
+		// Create static body (mass = 0)
+		const body = new CANNON.Body({
+			mass: 0,
+			material: this.objects.physics.materials.items.dummy
+		})
+		body.addShape(shape)
+
+		// Set position
+		body.position.set(x, y, z)
+
+		// Set rotation around Z axis
+		if (rotationZ !== 0) {
+			const quaternion = new CANNON.Quaternion()
+			quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), rotationZ)
+			body.quaternion = quaternion
+		}
+
+		// Add to physics world
+		this.objects.physics.world.addBody(body)
+
+		// Store reference for cleanup
+		this.collisionBodies.push(body)
+
+		return body
+	}
+
 	setFences() {
-		this.fences = {}
-		this.fences.left = []
-		this.fences.right = []
+		// === STRAIGHT SECTION - LEFT FENCE ===
+		this.createStraightFence(this.x - this.trackWidth, this.y, this.straightLength)
 
-		// Cone options
-		const coneOptions = {
-			base: this.resources.items.coneBase.scene,
-			collision: this.resources.items.coneCollision.scene,
-			offset: new THREE.Vector3(0, 0, 0),
-			rotation: new THREE.Euler(0, 0, 0),
-			duplicated: true,
-			shadow: { sizeX: 1.2, sizeY: 1.2, offsetZ: -0.1, alpha: 0.35 },
-			mass: 0.5
-		}
-
-		// === STRAIGHT SECTION ===
-		const straightConeCount = Math.floor(this.straightLength / this.fenceSpacing)
-
-		// Create left fence for straight section
-		for (let i = 0; i < straightConeCount; i++) {
-			const yOffset = -i * this.fenceSpacing
-
-			const leftCone = this.objects.add({
-				...coneOptions,
-				offset: new THREE.Vector3(this.x - this.trackWidth, this.y + yOffset, 0)
-			})
-			this.fences.left.push(leftCone)
-		}
-
-		// Create right fence for straight section
-		for (let i = 0; i < straightConeCount; i++) {
-			const yOffset = -i * this.fenceSpacing
-
-			const rightCone = this.objects.add({
-				...coneOptions,
-				offset: new THREE.Vector3(this.x + this.trackWidth, this.y + yOffset, 0)
-			})
-			this.fences.right.push(rightCone)
-		}
+		// === STRAIGHT SECTION - RIGHT FENCE ===
+		this.createStraightFence(this.x + this.trackWidth, this.y, this.straightLength)
 
 		// === RIGHT TURN SECTION ===
-		// Turn center is at the end of the straight, offset to the right
 		const turnCenterX = this.x + this.turnRadius
 		const turnCenterY = this.y - this.straightLength
 
@@ -78,41 +162,12 @@ export default class RacetrackSection {
 		const innerRadius = this.turnRadius - this.trackWidth
 		const outerRadius = this.turnRadius + this.trackWidth
 
-		// Calculate cone spacing along the arc
-		const innerArcLength = innerRadius * this.turnAngle
-		const outerArcLength = outerRadius * this.turnAngle
-		const innerConeCount = Math.floor(innerArcLength / this.fenceSpacing)
-		const outerConeCount = Math.floor(outerArcLength / this.fenceSpacing)
+		// Outer fence (left side, outside of turn)
+		// Angle goes from -PI/2 (pointing down) to 0 (pointing right)
+		this.createCurvedFence(turnCenterX, turnCenterY, outerRadius, -Math.PI / 2, 0)
 
-		// Create outer fence (left side, outside of turn)
-		for (let i = 0; i <= outerConeCount; i++) {
-			// Angle goes from -PI/2 (pointing down) to 0 (pointing right)
-			const angle = -Math.PI / 2 + (i / outerConeCount) * this.turnAngle
-
-			const coneX = turnCenterX + outerRadius * Math.cos(angle)
-			const coneY = turnCenterY + outerRadius * Math.sin(angle)
-
-			const cone = this.objects.add({
-				...coneOptions,
-				offset: new THREE.Vector3(coneX, coneY, 0)
-			})
-			this.fences.left.push(cone)
-		}
-
-		// Create inner fence (right side, inside of turn)
-		for (let i = 0; i <= innerConeCount; i++) {
-			// Angle goes from -PI/2 (pointing down) to 0 (pointing right)
-			const angle = -Math.PI / 2 + (i / innerConeCount) * this.turnAngle
-
-			const coneX = turnCenterX + innerRadius * Math.cos(angle)
-			const coneY = turnCenterY + innerRadius * Math.sin(angle)
-
-			const cone = this.objects.add({
-				...coneOptions,
-				offset: new THREE.Vector3(coneX, coneY, 0)
-			})
-			this.fences.right.push(cone)
-		}
+		// Inner fence (right side, inside of turn)
+		this.createCurvedFence(turnCenterX, turnCenterY, innerRadius, -Math.PI / 2, 0)
 	}
 
 	setTiles() {

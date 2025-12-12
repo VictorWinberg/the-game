@@ -278,6 +278,9 @@ export default class IntroSection {
 		const pyramidX = this.x + 0
 		const pyramidY = this.y - 10
 
+		// Store pyramid center for explosion
+		this.pyramidCenter = new THREE.Vector3(pyramidX, pyramidY, (pyramidLayers * blockSize) / 2)
+
 		// Get white material from the materials system
 		const whiteMaterial = this.objects.materials.shades.items.white
 
@@ -328,13 +331,69 @@ export default class IntroSection {
 			}
 		}
 
-		// Sync meshes with physics on each tick
+		// Track explosion state
+		this.pyramidExploded = false
+		this.carStartPosition = null
+
+		// Sync meshes with physics on each tick and check for car movement
 		this.time.on('tick', () => {
+			// Sync block meshes with physics
 			for (const block of this.pyramidBlocks) {
 				block.mesh.position.copy(block.body.position)
 				block.mesh.quaternion.copy(block.body.quaternion)
 			}
+
+			// Check for car movement to trigger explosion
+			if (!this.pyramidExploded) {
+				const carPosition = this.objects.physics.car.chassis.body.position
+
+				// Store initial position on first tick
+				if (this.carStartPosition === null) {
+					this.carStartPosition = new THREE.Vector3(carPosition.x, carPosition.y, carPosition.z)
+				} else {
+					// Calculate how far the car has moved
+					const distance = Math.sqrt(Math.pow(carPosition.x - this.carStartPosition.x, 2) + Math.pow(carPosition.y - this.carStartPosition.y, 2))
+
+					// Trigger explosion when car moves more than 1 unit
+					if (distance > 1) {
+						this.explodePyramid()
+						this.pyramidExploded = true
+					}
+				}
+			}
 		})
+	}
+
+	explodePyramid() {
+		const explosionStrength = 150
+		const upwardBoost = 80
+
+		for (const block of this.pyramidBlocks) {
+			// Wake up the body
+			block.body.wakeUp()
+
+			// Calculate direction from pyramid center to this block
+			const direction = new CANNON.Vec3(block.body.position.x - this.pyramidCenter.x, block.body.position.y - this.pyramidCenter.y, block.body.position.z - this.pyramidCenter.z)
+
+			// Normalize and scale by explosion strength
+			const length = Math.sqrt(direction.x ** 2 + direction.y ** 2 + direction.z ** 2)
+			if (length > 0) {
+				direction.x = (direction.x / length) * explosionStrength
+				direction.y = (direction.y / length) * explosionStrength
+				direction.z = (direction.z / length) * explosionStrength
+			}
+
+			// Add upward boost and some randomness
+			direction.z += upwardBoost + Math.random() * 30
+			direction.x += (Math.random() - 0.5) * 50
+			direction.y += (Math.random() - 0.5) * 50
+
+			// Apply impulse at center of mass
+			block.body.applyImpulse(direction, new CANNON.Vec3(0, 0, 0))
+
+			// Add random spin
+			block.body.angularVelocity.set((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100)
+		}
 	}
 
 	setTiles() {

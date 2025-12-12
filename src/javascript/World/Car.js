@@ -37,6 +37,7 @@ export default class Car {
 		this.setTransformControls()
 		this.setShootingBall()
 		this.setKlaxon()
+		this.setProjectileShoot()
 	}
 
 	setModels() {
@@ -341,6 +342,68 @@ export default class Car {
 					soundName: 'horn',
 					sleep: false
 				})
+			}
+		})
+	}
+
+	setProjectileShoot() {
+		this.projectile = {}
+		this.projectile.lastTime = 0
+		this.projectile.cooldown = 300 // milliseconds between shots
+
+		window.addEventListener('keydown', (_event) => {
+			if (_event.code === 'KeyQ') {
+				// Check cooldown
+				if (this.time.elapsed - this.projectile.lastTime < this.projectile.cooldown) {
+					return
+				}
+				this.projectile.lastTime = this.time.elapsed
+
+				// Get the car's forward direction from its rotation
+				const carAngle = this.chassis.object.rotation.z
+
+				// Calculate forward direction (car faces along the X axis in local space)
+				const forwardX = Math.cos(carAngle)
+				const forwardY = Math.sin(carAngle)
+
+				// Spawn projectile slightly in front of the car
+				const spawnDistance = 2.0
+				const x = this.position.x + forwardX * spawnDistance
+				const y = this.position.y + forwardY * spawnDistance
+				const z = this.position.z + 0.5
+
+				// Create the projectile using lemon (scaled down for a bullet-like size)
+				const projectile = this.objects.add({
+					base: this.resources.items.lemonBase.scene,
+					collision: this.resources.items.lemonCollision.scene,
+					offset: new THREE.Vector3(x, y, z),
+					rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
+					duplicated: true,
+					shadow: { sizeX: 0.2, sizeY: 0.2, offsetZ: -0.05, alpha: 0.25 },
+					mass: 1,
+					soundName: 'brick',
+					sleep: false
+				})
+
+				// Scale down the projectile for a smaller, bullet-like appearance
+				const scale = 0.4
+				projectile.container.scale.set(scale, scale, scale)
+
+				// Apply impulse in the forward direction
+				const impulseStrength = 80
+				const impulse = new CANNON.Vec3(
+					forwardX * impulseStrength,
+					forwardY * impulseStrength,
+					5 // Slight upward arc
+				)
+				projectile.collision.body.applyImpulse(impulse, projectile.collision.body.position)
+
+				// Add some spin for visual effect
+				projectile.collision.body.angularVelocity.set(
+					(Math.random() - 0.5) * 20,
+					(Math.random() - 0.5) * 20,
+					(Math.random() - 0.5) * 20
+				)
 			}
 		})
 	}
