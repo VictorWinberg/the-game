@@ -410,7 +410,7 @@ export default class Car {
 	setExplosion() {
 		this.explosion = {}
 		this.explosion.lastTime = 0
-		this.explosion.cooldown = 5000 // seconds between explosions
+		this.explosion.cooldown = 500 // milliseconds between explosions
 		this.explosion.radius = 8 // radius of effect
 		this.explosion.strength = 20 // impulse strength
 

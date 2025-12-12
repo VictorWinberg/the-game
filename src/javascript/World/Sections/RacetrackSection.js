@@ -103,8 +103,8 @@ export default class RacetrackSection {
 			const mesh = new THREE.Mesh(geometry, material)
 
 			mesh.position.set(midX, midY, this.fenceHeight / 2)
-			mesh.rotation.z = segmentRotation
-			mesh.rotation.y = segmentRotation
+			mesh.rotation.x = Math.PI / 2
+			mesh.rotation.y = midAngle + Math.PI / 2
 
 			mesh.matrixAutoUpdate = false
 			mesh.updateMatrix()
