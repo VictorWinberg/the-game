@@ -18,14 +18,20 @@ export default class SimulatedDrivers {
 		this.drivers = []
 
 		this.count = 8
-		this.spawnRadius = 40
-		this.spawnBounds = { minX: -100, maxX: 100, minY: -100, maxY: 100 }
+		this.spawnRadius = 18
+		this.spawnBounds = { minX: -25, maxX: 25, minY: -25, maxY: 25 }
 
 		if (this.debug) {
 			this.debugFolder = this.debug.addFolder('simulatedDrivers')
-			this.debugFolder.add(this, 'count').step(1).min(0).max(20).name('count').onFinishChange(() => {
-				this.updateDrivers()
-			})
+			this.debugFolder
+				.add(this, 'count')
+				.step(1)
+				.min(0)
+				.max(20)
+				.name('count')
+				.onFinishChange(() => {
+					this.updateDrivers()
+				})
 			this.debugFolder.add(this, 'spawnRadius').step(1).min(10).max(100).name('spawnRadius')
 			this.debugFolder.add(this.spawnBounds, 'minX').step(1).min(-200).max(200).name('spawnMinX')
 			this.debugFolder.add(this.spawnBounds, 'maxX').step(1).min(-200).max(200).name('spawnMaxX')
@@ -101,4 +107,3 @@ export default class SimulatedDrivers {
 		}
 	}
 }
-
