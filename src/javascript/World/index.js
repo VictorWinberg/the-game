@@ -599,6 +599,9 @@ export default class World {
 			case 'projectile-shoot':
 				this.spawnRemoteProjectile(action)
 				break
+			case 'backward-bowling-ball':
+				this.spawnRemoteBowlingBall(action)
+				break
 			case 'explosion':
 				this.triggerRemoteExplosion(action)
 				break
@@ -638,6 +641,33 @@ export default class World {
 			(Math.random() - 0.5) * 20,
 			(Math.random() - 0.5) * 20,
 			(Math.random() - 0.5) * 20
+		)
+	}
+
+	spawnRemoteBowlingBall(action) {
+		const bowlingBall = this.objects.add({
+			base: this.resources.items.bowlingBallBase.scene,
+			collision: this.resources.items.bowlingBallCollision.scene,
+			offset: new THREE.Vector3(action.position.x, action.position.y, action.position.z),
+			rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
+			duplicated: true,
+			shadow: { sizeX: 1.5, sizeY: 1.5, offsetZ: -0.15, alpha: 0.35 },
+			mass: 5,
+			soundName: 'bowlingBall',
+			sleep: false
+		})
+
+		const impulseStrength = 100
+		const impulse = new CANNON.Vec3(
+			action.direction.x * impulseStrength,
+			action.direction.y * impulseStrength,
+			10
+		)
+		bowlingBall.collision.body.applyImpulse(impulse, bowlingBall.collision.body.position)
+		bowlingBall.collision.body.angularVelocity.set(
+			(Math.random() - 0.5) * 10,
+			(Math.random() - 0.5) * 10,
+			(Math.random() - 0.5) * 10
 		)
 	}
 
