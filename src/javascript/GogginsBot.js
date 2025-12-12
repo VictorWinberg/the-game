@@ -24,7 +24,7 @@ export default class GogginsBot {
 
 	scheduleNextMessage() {
 		// Interval 60 seconds (60000 ms)
-		const delay = 60000
+		const delay = 30000
 
 		this.nextMessageDelay = setTimeout(() => {
 			this.sendMessage()
