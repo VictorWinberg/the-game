@@ -160,9 +160,9 @@ export default class Resources extends EventEmitter {
 			// { name: 'distinctionCStaticCollision', source: './models/distinctionC/static/collision.glb' },
 			// { name: 'distinctionCStaticFloorShadow', source: './models/distinctionC/static/floorShadow.png', type: 'texture' },
 
-			// // Cone
-			// { name: 'coneBase', source: './models/cone/base.glb' },
-			// { name: 'coneCollision', source: './models/cone/collision.glb' },
+			// Cone
+			{ name: 'coneBase', source: './models/cone/base.glb' },
+			{ name: 'coneCollision', source: './models/cone/collision.glb' },
 
 			// // Awwwards trophy
 			// { name: 'awwwardsTrophyBase', source: './models/awwwardsTrophy/base.glb' },

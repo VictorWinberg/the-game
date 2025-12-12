@@ -12,8 +12,9 @@ import Walls from './Walls.js'
 import IntroSection from './Sections/IntroSection.js'
 // import ProjectsSection from './Sections/ProjectsSection.js'
 // import CrossroadsSection from './Sections/CrossroadsSection.js'
-import InformationSection from './Sections/InformationSection.js'
+// import InformationSection from './Sections/InformationSection.js'
 import PlaygroundSection from './Sections/PlaygroundSection.js'
+import RacetrackSection from './Sections/RacetrackSection.js'
 // import DistinctionASection from './Sections/DistinctionASection.js'
 // import DistinctionBSection from './Sections/DistinctionBSection.js'
 // import DistinctionCSection from './Sections/DistinctionCSection.js'
@@ -438,14 +439,14 @@ export default class World {
 		// this.container.add(this.sections.projects.container)
 
 		// Information
-		this.sections.information = new InformationSection({
-			...options,
-			x: 1.2,
-			y: -55
-			// x: 0,
-			// y: - 10
-		})
-		this.container.add(this.sections.information.container)
+		// this.sections.information = new InformationSection({
+		// 	...options,
+		// 	x: 1.2,
+		// 	y: -55
+		// 	// x: 0,
+		// 	// y: - 10
+		// })
+		// this.container.add(this.sections.information.container)
 
 		// Playground
 		this.sections.playground = new PlaygroundSection({
@@ -456,6 +457,14 @@ export default class World {
 			// y: - 4
 		})
 		this.container.add(this.sections.playground.container)
+
+		// Racetrack
+		this.sections.racetrack = new RacetrackSection({
+			...options,
+			x: 0,
+			y: -15
+		})
+		this.container.add(this.sections.racetrack.container)
 	}
 
 	setEasterEggs() {
