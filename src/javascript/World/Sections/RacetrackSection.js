@@ -14,6 +14,7 @@ export default class RacetrackSection {
 		this.debug = _options.debug
 		this.x = _options.x
 		this.y = _options.y
+		this.car = _options.car || null
 
 		// Set up
 		this.container = new THREE.Object3D()
@@ -32,12 +33,21 @@ export default class RacetrackSection {
 		// Track path segments
 		this.trackSegments = []
 
+		// Building positions (stored during track calculation)
+		this.buildingPositions = []
+
+		// Lap tracking
+		this.lapCount = 0
+		this.startFinishLineY = null // Will be set in setStartFinishLine
+		this.carLastSide = null // 'north' or 'south' - tracks which side of the line the car is on
+
 		// Initialize track
 		this.calculateTrackPath()
 		this.setFences()
-		this.setTiles()
 		this.setStartFinishLine()
-		// this.setGrandstands() // Disabled for now
+		this.setPyramids()
+		this.setGrandstands()
+		this.setLapTracking()
 	}
 
 	calculateTrackPath() {
@@ -107,16 +117,51 @@ export default class RacetrackSection {
 			}
 		}
 
+		// Helper function to add a building position marker
+		// This stores a position along the track for later building placement
+		// offset: distance along track from current position (positive = forward, negative = backward)
+		// sideOffset: perpendicular offset from track (positive = left, negative = right)
+		// side: 'left' or 'right' or 'center' - which side of track
+		const addBuildingPosition = (name, offset = 0, sideOffset = 0, side = 'center') => {
+			// Calculate position relative to current track position
+			const alongTrackX = currentX + offset * Math.cos(currentHeading)
+			const alongTrackY = currentY + offset * Math.sin(currentHeading)
+
+			// Calculate perpendicular offset
+			const perpAngle = currentHeading + Math.PI / 2
+			const perpX = alongTrackX + sideOffset * Math.cos(perpAngle)
+			const perpY = alongTrackY + sideOffset * Math.sin(perpAngle)
+
+			// Store building position with metadata
+			this.buildingPositions.push({
+				name: name,
+				x: perpX,
+				y: perpY,
+				heading: currentHeading,
+				side: side,
+				offset: offset,
+				sideOffset: sideOffset
+			})
+
+			return { x: perpX, y: perpY, heading: currentHeading }
+		}
+
 		// Build track segments using relative definitions
-		this.trackSegments = [
+		const segments = [
 			// Segment 1: Start/Finish straight going UP
 			addStraight(80 * s),
+			// Grandstands K, A1, Z1 near start/finish (on right side)
+			addBuildingPosition('K', 35 * s, this.trackWidth + 8 * s, 'right'),
+			addBuildingPosition('A1', 50 * s, this.trackWidth + 10 * s, 'right'),
+			addBuildingPosition('Z1', 48 * s, this.trackWidth + 6 * s, 'right'),
 
 			// Segment 2: Right turn (90 degrees)
 			addCurve('right', 15 * s, -Math.PI / 2), // Right turn = negative angle change
 
 			// Segment 3: Straight going RIGHT (east)
 			addStraight(120 * s),
+			// Grandstand B on right side (moved much further from track to avoid overlap)
+			addBuildingPosition('B', 60 * s, this.trackWidth + 150 * s, 'right'),
 
 			// Segment 4: Left turn (135 degrees)
 			addCurve('left', 80 * s, (Math.PI * 3) / 4), // Left turn = positive angle change
@@ -132,6 +177,8 @@ export default class RacetrackSection {
 
 			// Segment 8: Straight segment
 			addStraight(60 * s),
+			// Grandstand T on left side
+			addBuildingPosition('T', 30 * s, -(this.trackWidth + 10 * s), 'left'),
 
 			// Segment 9: Left turn (180 degrees)
 			addCurve('left', 20 * s, Math.PI),
@@ -208,6 +255,12 @@ export default class RacetrackSection {
 			// Segment 32: Straight segment
 			addStraight(88 * s)
 		]
+
+		// Filter out building positions, keep only track segments
+		this.trackSegments = segments.filter((seg) => seg.type === 'straight' || seg.type === 'curve')
+
+		// Add special building positions (Paddock Club, General Admission)
+		// These are placed at specific locations relative to the track
 	}
 
 	createFenceMaterial() {
@@ -459,33 +512,72 @@ export default class RacetrackSection {
 		this.container.add(checkerGroup)
 	}
 
+	setLapTracking() {
+		// Track lap count by detecting when car crosses start/finish line
+		// The start/finish line is horizontal at y = this.startFinishLineY
+		// Track starts going UP (north), so we detect crossing from south to north
+
+		if (!this.objects || !this.objects.physics || !this.objects.physics.car) {
+			return
+		}
+
+		// Small threshold to avoid false positives from jitter
+		const lineThreshold = 0.5
+
+		this.time.on('tick', () => {
+			const carBody = this.objects.physics.car.chassis.body
+			if (!carBody) return
+
+			const carY = carBody.position.y
+			const lineY = this.startFinishLineY
+
+			// Determine which side of the line the car is on
+			// Use a small threshold to avoid jitter around the line
+			const currentSide = carY > lineY + lineThreshold ? 'north' : carY < lineY - lineThreshold ? 'south' : null
+
+			// Skip if car is exactly on the line (within threshold)
+			if (currentSide === null) {
+				return
+			}
+
+			// If we haven't initialized, set the initial side
+			if (this.carLastSide === null) {
+				this.carLastSide = currentSide
+				return
+			}
+
+			// Detect crossing: car was south and is now north (completed a lap)
+			if (this.carLastSide === 'south' && currentSide === 'north') {
+				// Check if car is reasonably close to the start line (within track width)
+				const carX = carBody.position.x
+				const startX = this.x + 0
+				const distanceFromLine = Math.abs(carX - startX)
+
+				// Only count lap if car is within reasonable distance of the start line
+				if (distanceFromLine < this.trackWidth * 2) {
+					this.lapCount++
+
+					// Notify the car about the lap completion
+					if (this.car && this.car.onLapComplete) {
+						this.car.onLapComplete(this.lapCount)
+					}
+				}
+			}
+
+			// Update last side
+			this.carLastSide = currentSide
+		})
+	}
+
 	setGrandstands() {
-		// Define grandstand positions and orientations
-		const s = this.scale
-
-		const grandstands = [
-			// Near start/finish area
-			{ name: 'K', x: 5 * s, y: 35 * s, width: 8, depth: 4, rotation: Math.PI / 4 },
-			{ name: 'A1', x: 20 * s, y: 50 * s, width: 12, depth: 5, rotation: 0 },
-			{ name: 'Z1', x: 45 * s, y: 48 * s, width: 6, depth: 3, rotation: 0 },
-
-			// Left side grandstands
-			{ name: 'M', x: -5 * s, y: 25 * s, width: 10, depth: 4, rotation: -Math.PI / 6 },
-			{ name: 'L', x: -15 * s, y: 18 * s, width: 8, depth: 4, rotation: 0 },
-			{ name: 'N', x: 8 * s, y: 18 * s, width: 8, depth: 4, rotation: Math.PI / 6 },
-			{ name: 'O', x: 15 * s, y: 12 * s, width: 6, depth: 3, rotation: 0 },
-			{ name: 'P', x: 0, y: 8 * s, width: 8, depth: 4, rotation: 0 },
-			{ name: 'T', x: -10 * s, y: -2 * s, width: 10, depth: 5, rotation: 0 },
-
-			// Far left grandstands
-			{ name: 'X1', x: -42 * s, y: 0, width: 6, depth: 3, rotation: Math.PI / 2 },
-			{ name: 'X2', x: -42 * s, y: 12 * s, width: 6, depth: 3, rotation: Math.PI / 2 },
-			{ name: 'V', x: -28 * s, y: -18 * s, width: 8, depth: 4, rotation: -Math.PI / 4 },
-
-			// Right side grandstands
-			{ name: 'B', x: 95 * s, y: 38 * s, width: 10, depth: 5, rotation: 0 },
-			{ name: 'C', x: 115 * s, y: 15 * s, width: 8, depth: 4, rotation: Math.PI / 4 }
-		]
+		// Grandstand definitions with sizes
+		const grandstandDefs = {
+			K: { width: 8, depth: 4 },
+			A1: { width: 12, depth: 5 },
+			Z1: { width: 6, depth: 3 },
+			T: { width: 10, depth: 5 },
+			B: { width: 10, depth: 5 }
+		}
 
 		// Create grandstand material
 		const grandstandMaterial = new THREE.MeshBasicMaterial({
@@ -494,20 +586,27 @@ export default class RacetrackSection {
 			opacity: 0.8
 		})
 
-		for (const stand of grandstands) {
-			// Create grandstand structure
-			const geometry = new THREE.BoxGeometry(stand.width, stand.depth, 2)
-			const mesh = new THREE.Mesh(geometry, grandstandMaterial.clone())
+		// Find all grandstand positions from buildingPositions
+		for (const pos of this.buildingPositions) {
+			if (grandstandDefs[pos.name]) {
+				const def = grandstandDefs[pos.name]
 
-			mesh.position.set(this.x + stand.x, this.y + stand.y, 1)
-			mesh.rotation.z = stand.rotation
+				// Create grandstand structure
+				const geometry = new THREE.BoxGeometry(def.width, def.depth, 2)
+				const mesh = new THREE.Mesh(geometry, grandstandMaterial.clone())
 
-			mesh.matrixAutoUpdate = false
-			mesh.updateMatrix()
-			this.container.add(mesh)
+				// Position relative to track, facing the track
+				const rotation = pos.heading + Math.PI / 2 // Face towards track
+				mesh.position.set(this.x + pos.x, this.y + pos.y, 1)
+				mesh.rotation.z = rotation
 
-			// Add label
-			this.addLabel(stand.name, this.x + stand.x, this.y + stand.y, 2.5)
+				mesh.matrixAutoUpdate = false
+				mesh.updateMatrix()
+				this.container.add(mesh)
+
+				// Add label
+				this.addLabel(pos.name, this.x + pos.x, this.y + pos.y, 2.5)
+			}
 		}
 	}
 
@@ -545,5 +644,166 @@ export default class RacetrackSection {
 		mesh.matrixAutoUpdate = false
 		mesh.updateMatrix()
 		this.container.add(mesh)
+	}
+
+	addTextLabel(text, x, y, z) {
+		// Create a text label using a canvas texture
+		const canvas = document.createElement('canvas')
+		canvas.width = 512
+		canvas.height = 128
+		const ctx = canvas.getContext('2d')
+
+		ctx.fillStyle = 'rgba(0, 0, 0, 0)'
+		ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+		ctx.font = 'bold 24px Arial'
+		ctx.fillStyle = '#333333'
+		ctx.textAlign = 'center'
+		ctx.textBaseline = 'middle'
+		ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+
+		const texture = new THREE.CanvasTexture(canvas)
+		texture.needsUpdate = true
+
+		const geometry = new THREE.PlaneGeometry(12, 3)
+		const material = new THREE.MeshBasicMaterial({
+			map: texture,
+			transparent: true,
+			side: THREE.DoubleSide,
+			depthWrite: false
+		})
+
+		const mesh = new THREE.Mesh(geometry, material)
+		mesh.position.set(x, y, z)
+		mesh.rotation.x = -Math.PI / 2
+
+		mesh.matrixAutoUpdate = false
+		mesh.updateMatrix()
+		this.container.add(mesh)
+	}
+
+	setPyramids() {
+		// Add pyramids randomly along the track
+		const s = this.scale
+		const pyramidProbability = 0.15 // 15% chance per segment
+		const minDistanceBetweenPyramids = 20 * s // Minimum distance between pyramids
+
+		// Store last pyramid position to maintain minimum distance
+		let lastPyramidX = null
+		let lastPyramidY = null
+
+		// Iterate through track segments
+		for (const segment of this.trackSegments) {
+			// Random chance to place a pyramid on this segment
+			if (Math.random() > pyramidProbability) {
+				continue
+			}
+
+			let pyramidX, pyramidY, pyramidRotation
+
+			if (segment.type === 'straight') {
+				// Calculate random position along straight segment
+				const t = Math.random() // 0 to 1 along the segment
+				pyramidX = this.x + segment.start.x + (segment.end.x - segment.start.x) * t
+				pyramidY = this.y + segment.start.y + (segment.end.y - segment.start.y) * t
+
+				// Calculate rotation to align with track direction
+				const dx = segment.end.x - segment.start.x
+				const dy = segment.end.y - segment.start.y
+				pyramidRotation = Math.atan2(dy, dx)
+			} else if (segment.type === 'curve') {
+				// Calculate random position along curve
+				const t = Math.random() // 0 to 1 along the curve
+				const angle = segment.startAngle + (segment.endAngle - segment.startAngle) * t
+				pyramidX = this.x + segment.center.x + segment.radius * Math.cos(angle)
+				pyramidY = this.y + segment.center.y + segment.radius * Math.sin(angle)
+
+				// Rotation tangent to the curve
+				pyramidRotation = angle + Math.PI / 2
+			} else {
+				continue
+			}
+
+			// Check minimum distance from last pyramid
+			if (lastPyramidX !== null && lastPyramidY !== null) {
+				const distance = Math.sqrt((pyramidX - lastPyramidX) ** 2 + (pyramidY - lastPyramidY) ** 2)
+				if (distance < minDistanceBetweenPyramids) {
+					continue // Skip this pyramid, too close to previous one
+				}
+			}
+
+			// Add small random offset perpendicular to track to vary placement
+			const perpAngle = pyramidRotation + Math.PI / 2
+			const offsetAmount = (Math.random() - 0.5) * (this.trackWidth * 0.3) // Small offset within track
+			pyramidX += Math.cos(perpAngle) * offsetAmount
+			pyramidY += Math.sin(perpAngle) * offsetAmount
+
+			// Add random rotation variation
+			const rotationVariation = (Math.random() - 0.5) * 0.3 // ±0.15 radians
+			pyramidRotation += rotationVariation
+
+			// Create pyramid using cone model (or create pyramid geometry)
+			// Check if cone resources are available
+			if (this.resources.items.coneBase && this.resources.items.coneCollision) {
+				this.objects.add({
+					base: this.resources.items.coneBase.scene,
+					collision: this.resources.items.coneCollision.scene,
+					offset: new THREE.Vector3(pyramidX, pyramidY, 0),
+					rotation: new THREE.Euler(0, 0, pyramidRotation),
+					duplicated: true,
+					shadow: { sizeX: 1.5, sizeY: 1.5, offsetZ: -0.3, alpha: 0.4 },
+					mass: 0.5, // Make them movable/knockable
+					soundName: 'woodHit',
+					isCone: true
+				})
+			} else {
+				// Fallback: create pyramid geometry if cone model not available
+				this.createPyramidGeometry(pyramidX, pyramidY, pyramidRotation)
+			}
+
+			// Update last pyramid position
+			lastPyramidX = pyramidX
+			lastPyramidY = pyramidY
+		}
+	}
+
+	createPyramidGeometry(x, y, rotation) {
+		// Create a simple pyramid using THREE.js geometry
+		const pyramidSize = 1.5
+		const pyramidHeight = 2
+
+		// Create pyramid shape (4-sided pyramid)
+		const geometry = new THREE.ConeGeometry(pyramidSize, pyramidHeight, 4)
+		const material = new THREE.MeshStandardMaterial({
+			color: 0xffaa00, // Orange color
+			roughness: 0.7,
+			metalness: 0.3
+		})
+
+		const pyramid = new THREE.Mesh(geometry, material)
+		pyramid.position.set(x, y, pyramidHeight / 2)
+		pyramid.rotation.z = rotation
+
+		pyramid.matrixAutoUpdate = false
+		pyramid.updateMatrix()
+		this.container.add(pyramid)
+
+		// Add simple collision (box approximation)
+		const halfExtents = new CANNON.Vec3(pyramidSize * 0.7, pyramidSize * 0.7, pyramidHeight / 2)
+		const shape = new CANNON.Box(halfExtents)
+		const body = new CANNON.Body({
+			mass: 0.5,
+			material: this.objects.physics.materials.items.dummy
+		})
+		body.addShape(shape)
+		body.position.set(x, y, pyramidHeight / 2)
+
+		// Set rotation
+		const quaternion = new CANNON.Quaternion()
+		quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), rotation)
+		body.quaternion = quaternion
+
+		this.objects.physics.world.addBody(body)
+		this.collisionBodies.push(body)
 	}
 }

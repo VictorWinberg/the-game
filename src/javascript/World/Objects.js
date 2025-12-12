@@ -282,6 +282,12 @@ export default class Objects {
 			_child.position.sub(object.collision.center)
 		}
 
+		// Mark as cone if specified
+		if (_options.isCone) {
+			object.collision.body.isCone = true
+			object.collision.body.coneObject = object
+		}
+
 		// Sound
 		if (_options.soundName) {
 			object.collision.body.addEventListener('collide', (_event) => {

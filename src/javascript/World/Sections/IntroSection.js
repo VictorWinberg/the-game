@@ -23,7 +23,6 @@ export default class IntroSection {
 		// this.setStatic()
 		this.setInstructions()
 		this.setOtherInstructions()
-		this.setPyramid()
 		this.setTiles()
 		this.setDikes()
 	}

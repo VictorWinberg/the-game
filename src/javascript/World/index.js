@@ -10,11 +10,11 @@ import Car from './Car.js'
 import Areas from './Areas.js'
 import Tiles from './Tiles.js'
 import Walls from './Walls.js'
-import IntroSection from './Sections/IntroSection.js'
+// import IntroSection from './Sections/IntroSection.js'
 // import ProjectsSection from './Sections/ProjectsSection.js'
 // import CrossroadsSection from './Sections/CrossroadsSection.js'
 // import InformationSection from './Sections/InformationSection.js'
-import PlaygroundSection from './Sections/PlaygroundSection.js'
+// import PlaygroundSection from './Sections/PlaygroundSection.js'
 import RacetrackSection from './Sections/RacetrackSection.js'
 // import DistinctionASection from './Sections/DistinctionASection.js'
 // import DistinctionBSection from './Sections/DistinctionBSection.js'
@@ -444,28 +444,29 @@ export default class World {
 		// this.container.add(this.sections.distinctionD.container)
 
 		// Intro
-		this.sections.intro = new IntroSection({
-			...options,
-			x: 0,
-			y: 0
-		})
-		this.container.add(this.sections.intro.container)
+		// this.sections.intro = new IntroSection({
+		// 	...options,
+		// 	x: 0,
+		// 	y: 0
+		// })
+		// this.container.add(this.sections.intro.container)
 
 		// Playground
-		this.sections.playground = new PlaygroundSection({
-			...options,
-			x: -38,
-			y: -34
-			// x: - 15,
-			// y: - 4
-		})
-		this.container.add(this.sections.playground.container)
+		// this.sections.playground = new PlaygroundSection({
+		// 	...options,
+		// 	x: -38,
+		// 	y: -34
+		// 	// x: - 15,
+		// 	// y: - 4
+		// })
+		// this.container.add(this.sections.playground.container)
 
 		// Racetrack
 		this.sections.racetrack = new RacetrackSection({
 			...options,
 			x: 0,
-			y: 10
+			y: 10,
+			car: this.car
 		})
 		this.container.add(this.sections.racetrack.container)
 	}
@@ -665,17 +666,9 @@ export default class World {
 		projectile.container.scale.set(scale, scale, scale)
 
 		const impulseStrength = 80
-		const impulse = new CANNON.Vec3(
-			action.direction.x * impulseStrength,
-			action.direction.y * impulseStrength,
-			5
-		)
+		const impulse = new CANNON.Vec3(action.direction.x * impulseStrength, action.direction.y * impulseStrength, 5)
 		projectile.collision.body.applyImpulse(impulse, projectile.collision.body.position)
-		projectile.collision.body.angularVelocity.set(
-			(Math.random() - 0.5) * 20,
-			(Math.random() - 0.5) * 20,
-			(Math.random() - 0.5) * 20
-		)
+		projectile.collision.body.angularVelocity.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20)
 	}
 
 	spawnRemoteBowlingBall(action) {
@@ -692,17 +685,9 @@ export default class World {
 		})
 
 		const impulseStrength = 100
-		const impulse = new CANNON.Vec3(
-			action.direction.x * impulseStrength,
-			action.direction.y * impulseStrength,
-			10
-		)
+		const impulse = new CANNON.Vec3(action.direction.x * impulseStrength, action.direction.y * impulseStrength, 10)
 		bowlingBall.collision.body.applyImpulse(impulse, bowlingBall.collision.body.position)
-		bowlingBall.collision.body.angularVelocity.set(
-			(Math.random() - 0.5) * 10,
-			(Math.random() - 0.5) * 10,
-			(Math.random() - 0.5) * 10
-		)
+		bowlingBall.collision.body.angularVelocity.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10)
 	}
 
 	triggerRemoteExplosion(action) {

@@ -52,7 +52,8 @@ export default class DistinctionBSection {
 				duplicated: true,
 				shadow: { sizeX: 2, sizeY: 2, offsetZ: -0.5, alpha: 0.5 },
 				mass: 0.6,
-				soundName: 'woodHit'
+				soundName: 'woodHit',
+				isCone: true
 			})
 		}
 	}

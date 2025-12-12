@@ -180,6 +180,11 @@ export default class Physics {
 					const relativeVelocity = _event.contact.getImpactVelocityAlongNormal()
 					this.sounds.play('carHit', relativeVelocity)
 				}
+
+				// Check if colliding with a cone
+				if (_event.body.isCone) {
+					this.explodeCone(_event.body)
+				}
 			})
 
 			/**
@@ -480,7 +485,10 @@ export default class Physics {
 
 			// Accelerate up
 			if (this.controls.actions.up) {
-				if (this.car.speed < controlsAcceleratinMaxSpeed || !this.car.goingForward) {
+				// If boost is active, allow continuous acceleration beyond max speed
+				if (this.controls.actions.boost) {
+					this.car.accelerating = accelerateStrength
+				} else if (this.car.speed < controlsAcceleratinMaxSpeed || !this.car.goingForward) {
 					this.car.accelerating = accelerateStrength
 				} else {
 					this.car.accelerating = 0
@@ -527,6 +535,12 @@ export default class Physics {
 
 		// Store AI cars
 		this.aiCars = []
+
+		// Cone explosion cooldown to prevent multiple explosions
+		this.coneExplosionCooldown = {}
+		this.coneExplosionCooldown.lastTime = 0
+		this.coneExplosionCooldown.duration = 200 // milliseconds
+		this.coneExplosionCooldown.lastConeBody = null
 
 		// Debug
 		if (this.debug) {
@@ -825,5 +839,101 @@ export default class Physics {
 		this.aiCars.push(aiCar)
 
 		return aiCar
+	}
+
+	explodeCone(coneBody) {
+		// Check cooldown to prevent multiple explosions from the same cone
+		// Allow explosion if it's a different cone or enough time has passed
+		const isSameCone = this.coneExplosionCooldown.lastConeBody === coneBody
+		const timeSinceLastExplosion = this.time.elapsed - this.coneExplosionCooldown.lastTime
+
+		if (isSameCone && timeSinceLastExplosion < this.coneExplosionCooldown.duration) {
+			return
+		}
+
+		this.coneExplosionCooldown.lastTime = this.time.elapsed
+		this.coneExplosionCooldown.lastConeBody = coneBody
+
+		// Get cone position
+		const conePos = coneBody.position
+
+		// Explosion parameters
+		const explosionRadius = 6
+		const explosionStrength = 30
+		const carExplosionStrength = 50 // Stronger force for the car
+
+		// Get car position
+		const carPos = this.car.chassis.body.position
+
+		// Calculate direction from cone to car
+		let direction = carPos.vsub(conePos)
+		const distance = direction.length()
+
+		// Only explode if car is close enough
+		if (distance > explosionRadius) {
+			return
+		}
+
+		// Normalize direction
+		direction.normalize()
+
+		// Apply strong impulse to car (away from cone)
+		const carImpulse = new CANNON.Vec3(
+			direction.x * carExplosionStrength,
+			direction.y * carExplosionStrength,
+			(direction.z + 0.8) * carExplosionStrength // Add upward boost
+		)
+		this.car.chassis.body.applyImpulse(carImpulse, carPos)
+
+		// Add angular velocity for spinning effect
+		this.car.chassis.body.angularVelocity.set(
+			(Math.random() - 0.5) * 15,
+			(Math.random() - 0.5) * 15,
+			(Math.random() - 0.5) * 15
+		)
+
+		// Apply explosion to nearby objects
+		for (const body of this.world.bodies) {
+			// Skip the car chassis, cone itself, and static objects
+			if (body === this.car.chassis.body || body === coneBody || body.mass === 0) {
+				continue
+			}
+
+			const bodyPos = body.position
+			const bodyDistance = conePos.distanceTo(bodyPos)
+
+			// Check if within explosion radius
+			if (bodyDistance < explosionRadius && bodyDistance > 0) {
+				// Wake up the body if sleeping
+				body.wakeUp()
+
+				// Calculate direction away from cone
+				let bodyDirection = bodyPos.vsub(conePos)
+				bodyDirection.normalize()
+
+				// Calculate impulse strength based on distance (closer = stronger)
+				const distanceFactor = 1 - bodyDistance / explosionRadius
+				const impulseStrength = explosionStrength * distanceFactor * body.mass
+
+				// Apply impulse with upward force
+				const impulse = new CANNON.Vec3(
+					bodyDirection.x * impulseStrength,
+					bodyDirection.y * impulseStrength,
+					(bodyDirection.z + 0.5) * impulseStrength
+				)
+
+				body.applyImpulse(impulse, body.position)
+
+				// Add some random angular velocity for tumbling effect
+				body.angularVelocity.set(
+					(Math.random() - 0.5) * 10,
+					(Math.random() - 0.5) * 10,
+					(Math.random() - 0.5) * 10
+				)
+			}
+		}
+
+		// Play explosion sound
+		this.sounds.play('brick')
 	}
 }
