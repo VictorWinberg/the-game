@@ -21,12 +21,11 @@ export default class RacetrackSection {
 
 		// Fence configuration
 		this.trackWidth = 8 // Width of the track (distance from center to fence)
-		this.straightLength = 40 // Length of the straight section
-		this.turnRadius = 20 // Radius of the turn (to center of track)
-		this.turnAngle = Math.PI / 2 // 90 degree turn
+		this.straightLength = 60 // Length of the straight sections
+		this.turnRadius = 25 // Radius of the turn (to center of track)
 		this.fenceHeight = 1.5 // Height of the fence
 		this.fenceThickness = 0.3 // Thickness of collision box
-		this.fenceSegments = 16 // Number of segments for curved fence
+		this.fenceSegments = 32 // Number of segments for curved fence (more for smoother curves)
 
 		// Store collision bodies for cleanup
 		this.collisionBodies = []
@@ -48,30 +47,24 @@ export default class RacetrackSection {
 		return material
 	}
 
-	createStraightFence(startX, startY, length) {
-		// Create fence geometry - same as curved fence segments
+	createStraightFence(startX, startY, length, rotation = 0) {
 		const geometry = new THREE.PlaneGeometry(length, this.fenceHeight)
-
-		// Create material
 		const material = this.createFenceMaterial()
-
-		// Create mesh
 		const mesh = new THREE.Mesh(geometry, material)
 
-		// Position: center of the fence along Y, raised by half the height on Z
+		// Default orientation is aligned with Y (same as your original code)
 		mesh.position.set(startX, startY - length / 2, this.fenceHeight / 2)
 
-		// Rotate 90° around Z to align the fence along Y axis (same approach as curved fence)
-		mesh.rotation.z = Math.PI / 2
+		// Apply rotation around Z
+		mesh.rotation.z = rotation + Math.PI / 2
 		mesh.rotation.y = Math.PI / 2
 
 		mesh.matrixAutoUpdate = false
 		mesh.updateMatrix()
-
 		this.container.add(mesh)
 
-		// Create collision body
-		this.createFenceCollision(startX, startY - length / 2, this.fenceHeight / 2, length, this.fenceThickness, this.fenceHeight, 0)
+		// Collision
+		this.createFenceCollision(startX, startY - length / 2, this.fenceHeight / 2, length, this.fenceThickness, this.fenceHeight, rotation)
 
 		return mesh
 	}
@@ -116,7 +109,7 @@ export default class RacetrackSection {
 		}
 	}
 
-	createFenceCollision(x, y, z, length, thickness, height, rotationZ) {
+	createFenceCollision(x, y, z, length, thickness, height, rotationY) {
 		// Create box shape for collision (thickness along local X, length along local Y, height along local Z)
 		const halfExtents = new CANNON.Vec3(thickness / 2, length / 2, height / 2)
 		const shape = new CANNON.Box(halfExtents)
@@ -131,10 +124,10 @@ export default class RacetrackSection {
 		// Set position
 		body.position.set(x, y, z)
 
-		// Set rotation around Z axis
-		if (rotationZ !== 0) {
+		// Set rotation around Y axis
+		if (rotationY !== 0) {
 			const quaternion = new CANNON.Quaternion()
-			quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), rotationZ)
+			quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), rotationY)
 			body.quaternion = quaternion
 		}
 
